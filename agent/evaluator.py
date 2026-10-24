@@ -54,12 +54,17 @@ _NOT_PRODUCT_CODES = {"FDA", "SQL", "USA", "USD", "MDR", "CFR", "PMA", "CSV", "A
 _NUMBER = re.compile(r"(?<![\w.])(\d[\d,]*(?:\.\d+)?)(%?)")
 
 
+def product_codes(text):
+    """FDA product codes named in a piece of text (three capitals, minus common acronyms)."""
+    return [code for code in re.findall(r"\b[A-Z]{3}\b", text) if code not in _NOT_PRODUCT_CODES]
+
+
 def _scope_problem(claim):
     """A claim's wording must be reflected in its SQL: 'cardiovascular' and any product code."""
     sql, wanted = claim.citation.sql.lower(), []
     if "cardiovascular" in claim.text.lower():
         wanted.append("cardiovascular")
-    wanted += [code for code in re.findall(r"\b[A-Z]{3}\b", claim.text) if code not in _NOT_PRODUCT_CODES]
+    wanted += product_codes(claim.text)
     missing = [term for term in wanted if term.lower() not in sql]
     if missing:
         return (f"claim mentions {', '.join(missing)} but the cited SQL never does; "
