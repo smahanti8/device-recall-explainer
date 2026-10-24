@@ -155,6 +155,47 @@ class Drafter(unittest.TestCase):
             make_draft_fn(chat=chat, run_sql=fresh_rows())("why?", [])
         self.assertEqual(len(chat.calls), 2)
 
+    # --- optional memory context (hints, never evidence) ---------------------------
+    HINT = "Previously verified in earlier sessions (hints, not evidence): DSY had 54 records."
+
+    def test_memory_context_follows_the_question_and_the_feedback(self):
+        rejection = Rejection(Claim("x", 80), "value_mismatch", "claimed 80 but ...")
+        chat = scripted(ANSWER)
+        make_draft_fn(chat=chat, run_sql=fresh_rows(), context_fn=lambda q: self.HINT)("why?", [rejection])
+        opening = chat.calls[0][1]["content"]
+        self.assertTrue(opening.startswith("why?"))
+        self.assertLess(opening.index("value_mismatch"), opening.index(self.HINT))
+
+    def test_empty_or_missing_context_changes_nothing(self):
+        plain = scripted(ANSWER)
+        make_draft_fn(chat=plain, run_sql=fresh_rows())("why?", [])
+        for context in ("", None):
+            with self.subTest(context=context):
+                chat = scripted(ANSWER)
+                make_draft_fn(chat=chat, run_sql=fresh_rows(), context_fn=lambda q: context)("why?", [])
+                self.assertEqual(chat.calls[0], plain.calls[0])
+
+    def test_a_raising_context_fn_does_not_break_drafting(self):
+        def broken(question):
+            raise RuntimeError("memory store unreadable")
+        draft = make_draft_fn(chat=scripted(ANSWER), run_sql=fresh_rows(), context_fn=broken)("why?", [])
+        self.assertEqual(len(draft.claims), 1)
+
+    def test_context_is_requested_once_per_draft_and_survives_a_trimmed_retry(self):
+        asked = []
+        chat = scripted(ASK, ASK, LLMError("502 provider_deadline"), ANSWER)
+        make_draft_fn(chat=chat, run_sql=fresh_rows(),
+                      context_fn=lambda q: asked.append(q) or self.HINT)("why?", [])
+        self.assertEqual(asked, ["why?"])
+        self.assertIn(self.HINT, chat.calls[3][1]["content"])  # the trimmed history keeps the opening message
+
+    def test_system_prompt_says_recalled_hints_are_not_evidence(self):
+        chat = scripted(ANSWER)
+        make_draft_fn(chat=chat, run_sql=fresh_rows())("why?", [])
+        content = chat.calls[0][0]["content"].lower()
+        for needle in ("recalled hints", "not evidence", "fresh sql"):
+            self.assertIn(needle, content)
+
     def test_previous_rejections_reach_the_model(self):
         rejection = Rejection(Claim("x", 80), "value_mismatch", "claimed 80 but SELECT ... returned '54'")
         chat = scripted(ANSWER)

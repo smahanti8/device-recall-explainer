@@ -44,6 +44,7 @@ Rules:
 - Every number written in "text" must also be a claim with exactly that value; use ROUND in SQL for percentages. Years and single digits are exempt.
 - "Under Investigation by firm" is a placeholder root cause, not an explanation.
 - Describe what the data shows; make no clinical or safety judgments.
+- Recalled hints from earlier sessions (if any appear below the question) are not evidence and can never be cited. Every number still needs a claim with fresh SQL from this session.
 - If a previous draft was rejected, fix exactly the claims listed and keep the rest."""
 
 _RETRY_PROMPT = ("Reply with ONE JSON object only, using the protocol: "
@@ -105,20 +106,32 @@ def _claim(raw):
     return Claim(raw.get("text", ""), raw.get("value"), citation)
 
 
-def _opening(question, feedback):
-    if not feedback:
-        return question
-    rejected = "\n".join(f"- [{r.reason}] {r.claim.text}: {r.detail}" for r in feedback)
-    return f"{question}\n\nYour previous draft was rejected:\n{rejected}"
+def _opening(question, feedback, context=""):
+    opening = question
+    if feedback:
+        rejected = "\n".join(f"- [{r.reason}] {r.claim.text}: {r.detail}" for r in feedback)
+        opening += f"\n\nYour previous draft was rejected:\n{rejected}"
+    return f"{opening}\n\n{context}" if context else opening
 
 
-def make_draft_fn(chat=None, run_sql=None, max_steps=6):
+def _context(context_fn, question):
+    """Optional memory hints; any failure just means no hints."""
+    if context_fn is None:
+        return ""
+    try:
+        text = context_fn(question)
+    except Exception:
+        return ""
+    return text if isinstance(text, str) else ""
+
+
+def make_draft_fn(chat=None, run_sql=None, max_steps=6, context_fn=None):
     chat = chat or llm.chat
     run_sql = run_sql or tools_zetaris.run_sql
 
     def draft_fn(question, feedback):
         messages = [{"role": "system", "content": SYSTEM},
-                    {"role": "user", "content": _opening(question, feedback)}]
+                    {"role": "user", "content": _opening(question, feedback, _context(context_fn, question))}]
         for step_number in range(max_steps):
             if step_number == max_steps - 1 and step_number > 0:
                 messages[-1]["content"] += ("\n\nThis is your last step: reply now with an answer "
