@@ -15,6 +15,7 @@ from agent.loop import Draft
 
 MAX_ROWS = 20
 MAX_BATCH = 3
+MAX_TOKENS = 8000  # the model's reasoning counts against this; a small budget returns an empty reply
 
 SYSTEM = """/no_think
 You investigate US FDA medical device recall data stored in Zetaris. Reply with exactly one JSON object per turn. Your very first reply must already be an "action" object (no plan, no prose).
@@ -137,10 +138,10 @@ def make_draft_fn(chat=None, run_sql=None, max_steps=6, context_fn=None):
                 messages[-1]["content"] += ("\n\nThis is your last step: reply now with an answer "
                                             "JSON using only the results you already have.")
             try:
-                raw = chat(messages, max_tokens=3000).text
+                raw = chat(messages, max_tokens=MAX_TOKENS).text
             except llm.LLMError:  # e.g. provider deadline: retry once with a smaller request
                 messages = _trimmed(messages)
-                raw = chat(messages, max_tokens=3000).text
+                raw = chat(messages, max_tokens=MAX_TOKENS).text
             messages.append({"role": "assistant", "content": raw})
             step = _parse(raw)
             if step is None:

@@ -34,15 +34,17 @@ ANSWER = json.dumps({"action": "answer", "text": "DSY had 54 recall records in 2
 
 def scripted(*replies):
     """A fake chat: returns the replies in order and records every message list it was given."""
-    calls, queue = [], iter(replies)
+    calls, tokens, queue = [], [], iter(replies)
 
     def chat(messages, max_tokens=2000):
         calls.append(copy.deepcopy(messages))
+        tokens.append(max_tokens)
         item = next(queue)
         if isinstance(item, Exception):
             raise item
         return Reply(item, "nvidia/test", None)
     chat.calls = calls
+    chat.tokens = tokens
     return chat
 
 
@@ -195,6 +197,13 @@ class Drafter(unittest.TestCase):
         content = chat.calls[0][0]["content"].lower()
         for needle in ("recalled hints", "not evidence", "fresh sql"):
             self.assertIn(needle, content)
+
+    def test_every_turn_asks_for_enough_tokens_for_reasoning(self):
+        # The model's reasoning counts against max_tokens; too small a budget leaves an empty reply.
+        chat = scripted(ASK, LLMError("502 empty_response"), ANSWER)
+        make_draft_fn(chat=chat, run_sql=fresh_rows())("why?", [])
+        self.assertEqual(len(chat.tokens), 3)  # includes the retried turn
+        self.assertTrue(all(t >= 6000 for t in chat.tokens), chat.tokens)
 
     def test_previous_rejections_reach_the_model(self):
         rejection = Rejection(Claim("x", 80), "value_mismatch", "claimed 80 but SELECT ... returned '54'")
