@@ -7,7 +7,7 @@ resolve, or after `max_rounds` and reports what it could not support.
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
-from agent.evaluator import Claim, Rejection
+from agent.evaluator import Claim, Rejection, unclaimed_numbers
 
 
 @dataclass
@@ -28,7 +28,12 @@ def _rejections(draft, evaluate_fn):
     if not draft.claims:  # an answer with nothing checkable is not evidence
         placeholder = Claim("answer states no verifiable claims", None)
         return [Rejection(placeholder, "no_claims", "every answer needs cited claims")]
-    return evaluate_fn(draft.claims).rejections
+    rejections = list(evaluate_fn(draft.claims).rejections)
+    for token in unclaimed_numbers(draft.text, draft.claims):
+        rejections.append(Rejection(
+            Claim(f"unclaimed number {token}", None), "unclaimed_number",
+            f"the answer text states {token} but no claim has that value; cite it or remove it"))
+    return rejections
 
 
 def investigate(question, draft_fn, evaluate_fn, max_rounds=3):

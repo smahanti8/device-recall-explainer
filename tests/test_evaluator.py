@@ -69,9 +69,35 @@ class Evaluate(unittest.TestCase):
             with self.subTest(claim=bad.text):
                 self.assertEqual(evaluate([bad], run_sql=self.sql).rejections[0].reason, "no_such_cell")
 
+    def test_claim_about_cardiovascular_must_cite_cardiovascular_scope(self):
+        wide = "SELECT SUM(recall_count) AS total FROM openfda.recall_by_product_2024_table"
+        wrong = Claim("Total cardiovascular recall records in 2024", 3279, Citation(wide, "total"))
+        rejection = evaluate([wrong], run_sql=fake_sql({wide: [{"total": "3279"}]})).rejections[0]
+        self.assertEqual(rejection.reason, "scope_mismatch")
+        self.assertIn("cardiovascular", rejection.detail)
+        scoped = ("SELECT SUM(b.recall_count) AS total FROM openfda.classification_cardiovascular_table c "
+                  "JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code")
+        right = Claim("Total cardiovascular recall records in 2024", 482, Citation(scoped, "total"))
+        self.assertTrue(evaluate([right], run_sql=fake_sql({scoped: [{"total": "482"}]})).ok)
+
+    def test_claim_naming_a_product_code_must_cite_that_code(self):
+        other = "SELECT COUNT(*) AS n FROM openfda.recall_dqo_2024_table"
+        bad = Claim("DSY recall records in 2024", 51, Citation(other, "n"))
+        rejection = evaluate([bad], run_sql=fake_sql({other: [{"n": "51"}]})).rejections[0]
+        self.assertEqual(rejection.reason, "scope_mismatch")
+        self.assertIn("DSY", rejection.detail)
+
+    def test_common_acronyms_are_not_mistaken_for_product_codes(self):
+        wide = "SELECT SUM(recall_count) AS total FROM openfda.recall_by_product_2024_table"
+        ok = Claim("FDA device recall records in 2024", 3279, Citation(wide, "total"))
+        self.assertTrue(evaluate([ok], run_sql=fake_sql({wide: [{"total": "3279"}]})).ok)
+
+
+TOTAL_2024 = "SELECT SUM(recall_count) AS total FROM openfda.recall_by_product_2024_table"
+
 
 class Loop(unittest.TestCase):
-    sql = staticmethod(fake_sql({DSY_RECORDS: [{"n": "54"}]}))
+    sql = staticmethod(fake_sql({DSY_RECORDS: [{"n": "54"}], TOTAL_2024: [{"total": "3279"}]}))
 
     def evaluator(self, claims):
         return evaluate(claims, run_sql=self.sql)
@@ -99,6 +125,23 @@ class Loop(unittest.TestCase):
         result = investigate("why?", lambda q, f: Draft("trust me", []), self.evaluator, max_rounds=2)
         self.assertIsNone(result.text)
         self.assertEqual(result.trace[0]["reasons"], ["no_claims"])
+
+    def test_numbers_in_the_text_must_be_claimed(self):
+        drafts = iter([
+            Draft("DSY had 54 recall records (about 65% of the rise).", [claim(54)]),
+            Draft("DSY had 54 recall records.", [claim(54)]),
+        ])
+        result = investigate("why?", lambda q, f: next(drafts), self.evaluator)
+        self.assertEqual(result.trace[0]["reasons"], ["unclaimed_number"])
+        self.assertEqual(result.text, "DSY had 54 recall records.")
+        self.assertEqual(result.rounds, 2)
+
+    def test_years_single_digits_and_thousands_separators_are_handled(self):
+        text = "In 2024 there were 3,279 records across 1 event, a Class 2 device."
+        total = Claim("total recall records", 3279, Citation(TOTAL_2024, "total"))
+        result = investigate("why?", lambda q, f: Draft(text, [total]), self.evaluator)
+        self.assertEqual(result.text, text)
+        self.assertEqual(result.rounds, 1)
 
     def test_trace_has_one_entry_per_round(self):
         result = investigate("why?", lambda q, f: Draft("a", [claim(80)] if not f else [claim(54)]), self.evaluator)

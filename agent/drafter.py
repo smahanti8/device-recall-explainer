@@ -28,9 +28,13 @@ Views (schema openfda; every value comes back as a string):
 - recall_dsy_2024_table, recall_dqo_2024_table, recall_oez_2024_table, recall_drilldown_2024_table (the union of the three)(cfres_id, res_event_number, product_code, event_date_initiated, recall_status, recalling_firm, root_cause_description, reason_for_recall): record-level 2024 recalls for product codes DSY, DQO and OEZ only
 Join recalls to classification on product_code. Query as openfda.<view>.
 
+Example claim: {"text": "Cardiovascular recall records in 2024", "value": 482, "sql": "SELECT SUM(b.recall_count) AS total FROM openfda.classification_cardiovascular_table c JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code", "column": "total", "row": 0}
+
 Rules:
 - Every number in your answer must be a claim whose sql returns it in the named column and row. Let SQL compute differences, totals and shares; never compute them yourself.
 - Recall "records" are product-level entries. One recall event (res_event_number) can have many records. Say "records" for counts of rows, and report COUNT(DISTINCT res_event_number) as "events". Never call records "recalls" without that distinction.
+- A claim's sql must be scoped to what its text says (scope): a claim about cardiovascular devices must join openfda.classification_cardiovascular_table; a claim about a product code must filter on that code or use its view (for example recall_dsy_2024_table).
+- Every number written in "text" must also be a claim with exactly that value; use ROUND in SQL for percentages. Years and single digits are exempt.
 - "Under Investigation by firm" is a placeholder root cause, not an explanation.
 - Describe what the data shows; make no clinical or safety judgments.
 - If a previous draft was rejected, fix exactly the claims listed and keep the rest."""

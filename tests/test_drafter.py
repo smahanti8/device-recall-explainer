@@ -123,6 +123,13 @@ class Drafter(unittest.TestCase):
         for needle in ("recall_by_product_2024_table", "recall_dsy_2024_table", "SELECT", "events", "records"):
             self.assertIn(needle, system["content"])
 
+    def test_system_prompt_has_an_example_claim_and_a_scope_rule(self):
+        chat = scripted(ANSWER)
+        make_draft_fn(chat=chat, run_sql=fresh_rows())("why?", [])
+        content = chat.calls[0][0]["content"].lower()
+        for needle in ("example claim", "scope", "join"):
+            self.assertIn(needle, content)
+
 
 @unittest.skipUnless(os.environ.get("RUN_LIVE_AGENT"), "set RUN_LIVE_AGENT=1 (slow: real model + Zetaris)")
 class LiveAgent(unittest.TestCase):
