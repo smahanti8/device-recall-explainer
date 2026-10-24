@@ -90,6 +90,18 @@ class Retries(unittest.TestCase):
         self.assertEqual(len(calls), 3)
         self.assertIn("502", str(ctx.exception))
 
+    def test_default_patience_covers_a_short_provider_outage(self):
+        calls, delays = [], []
+
+        def down(messages, max_tokens):
+            calls.append(1)
+            raise TransientError("502 provider_deadline")
+
+        with self.assertRaises(LLMError):
+            chat(MESSAGES, send=down, sleep=delays.append)
+        self.assertEqual(len(calls), 5)
+        self.assertGreaterEqual(sum(delays), 40)  # waits of 3, 6, 12, 24 seconds
+
     def test_non_transient_error_is_not_retried(self):
         calls = []
 

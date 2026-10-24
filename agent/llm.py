@@ -20,7 +20,7 @@ load_dotenv()
 log = logging.getLogger("agent.llm")
 _SLOTS = threading.BoundedSemaphore(2)
 _TRANSIENT_STATUS = {429, 500, 502, 503, 504}
-_BASE_DELAY = 1.0
+_BASE_DELAY = 3.0
 
 
 class LLMError(Exception):
@@ -70,7 +70,7 @@ def _send(messages, max_tokens):
     return response.model_dump()
 
 
-def chat(messages, max_tokens=2000, *, send=None, sleep=time.sleep, attempts=4):
+def chat(messages, max_tokens=2000, *, send=None, sleep=time.sleep, attempts=5):
     send = send or _send
     last = None
     for attempt in range(attempts):
