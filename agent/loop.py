@@ -49,11 +49,12 @@ def investigate(question, draft_fn, evaluate_fn, max_rounds=3):
         except LLMError as error:  # an outage costs a round; any other exception is a bug
             unsupported = [Claim(f"model unavailable: {str(error)[:150]}", None)]
             trace.append({"round": round_number, "claims": 0, "rejected": 1,
-                          "reasons": ["model_unavailable"]})
+                          "reasons": ["model_unavailable"], "details": [str(error)[:200]]})
             continue
         rejections = _rejections(draft, evaluate_fn)
         trace.append({"round": round_number, "claims": len(draft.claims),
-                      "rejected": len(rejections), "reasons": [r.reason for r in rejections]})
+                      "rejected": len(rejections), "reasons": [r.reason for r in rejections],
+                      "details": [r.detail for r in rejections]})
         if not rejections:
             return Result(draft.text, [], round_number, trace, claims=draft.claims)
         feedback = rejections

@@ -181,6 +181,13 @@ class Loop(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             investigate("why?", draft_fn, self.evaluator)
 
+    def test_trace_entries_carry_each_rejection_detail(self):
+        drafts = iter([Draft("a", [claim(80)]), Draft("a", [claim(54)])])
+        result = investigate("why?", lambda q, f: next(drafts), self.evaluator)
+        self.assertEqual(len(result.trace[0]["details"]), len(result.trace[0]["reasons"]))
+        self.assertIn("80", result.trace[0]["details"][0])
+        self.assertEqual(result.trace[1]["details"], [])
+
     def test_trace_has_one_entry_per_round(self):
         result = investigate("why?", lambda q, f: Draft("a", [claim(80)] if not f else [claim(54)]), self.evaluator)
         self.assertEqual([t["round"] for t in result.trace], [1, 2])
