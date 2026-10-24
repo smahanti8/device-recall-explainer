@@ -38,7 +38,11 @@ Playbook for "why did X rise or fall between two years" questions (batch queries
 - Step 2 (one turn): for the top product code(s) that have a record-level view, the root causes, the recalling firms, and COUNT(DISTINCT res_event_number) as events.
 - Step 3: answer with cited claims.
 
+Example year-over-year claim (each view appears once): {"text": "Increase in cardiovascular recall records, 2023 to 2024", "value": 201, "sql": "SELECT SUM(COALESCE(b.recall_count,0)) - SUM(COALESCE(a.recall_count,0)) AS diff FROM openfda.classification_cardiovascular_table c LEFT JOIN openfda.recall_by_product_2023_table a ON a.product_code = c.product_code LEFT JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code", "column": "diff", "row": 0}
+
 Rules:
+- Zetaris limitation: reference each openfda view at most once per statement. Never repeat a view in separate subqueries; compute differences and shares with one JOIN of both years, or a WITH clause that you reuse.
+- Write every percentage in "text" with exactly the one decimal the SQL returns (use ROUND(x, 1)), for example 65.2%, never 65%.
 - Every number in your answer must be a claim whose sql returns it in the named column and row. Let SQL compute differences, totals and shares; never compute them yourself.
 - Recall "records" are product-level entries. One recall event (res_event_number) can have many records. Say "records" for counts of rows, and report COUNT(DISTINCT res_event_number) as "events". Never call records "recalls" without that distinction.
 - A claim's sql must be scoped to what its text says (scope): a claim about cardiovascular devices must join openfda.classification_cardiovascular_table; a claim about a product code must filter on that code or use its view (for example recall_dsy_2024_table).
@@ -78,11 +82,20 @@ def _rows_message(rows):
     return f"Result ({len(rows)} rows):\n{shown}{note}"
 
 
+_DOUBLE_VIEW_HINT = ("Hint: Zetaris fails when the same openfda view appears twice in one statement. "
+                     "Reference each view once per statement; use a single JOIN or a WITH clause.")
+
+
+def _hint(message):
+    return f"\n{_DOUBLE_VIEW_HINT}" if "MISSING_ATTRIBUTES" in message else ""
+
+
 def _run_one(run_sql, sql):
     try:
         return _rows_message(run_sql(sql))
     except Exception as error:
-        return f"Error: {str(error)[:300]}"
+        message = str(error)
+        return f"Error: {message[:300]}{_hint(message)}"
 
 
 def _run_queries(run_sql, step):
@@ -112,6 +125,8 @@ def _opening(question, feedback, context=""):
     if feedback:
         rejected = "\n".join(f"- [{r.reason}] {r.claim.text}: {r.detail}" for r in feedback)
         opening += f"\n\nYour previous draft was rejected:\n{rejected}"
+        if any("MISSING_ATTRIBUTES" in r.detail for r in feedback):
+            opening += f"\n{_DOUBLE_VIEW_HINT}"
     return f"{opening}\n\n{context}" if context else opening
 
 

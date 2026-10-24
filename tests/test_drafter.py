@@ -205,6 +205,43 @@ class Drafter(unittest.TestCase):
         self.assertEqual(len(chat.tokens), 3)  # includes the retried turn
         self.assertTrue(all(t >= 6000 for t in chat.tokens), chat.tokens)
 
+    # --- Zetaris quirk: the same view twice in one statement fails ----------------------
+    DOUBLE_VIEW_ERROR = ("Zetaris returned 400: [MISSING_ATTRIBUTES.RESOLVED_ATTRIBUTE_APPEAR_IN_OPERATION] "
+                         "Resolved attribute(s) results missing from meta, results in operator !Generate explode(results)")
+
+    def test_system_prompt_says_to_reference_each_view_once_per_statement(self):
+        chat = scripted(ANSWER)
+        make_draft_fn(chat=chat, run_sql=fresh_rows())("why?", [])
+        content = chat.calls[0][0]["content"].lower()
+        for needle in ("once per statement", "with clause"):
+            self.assertIn(needle, content)
+
+    def test_system_prompt_has_the_working_year_over_year_example(self):
+        chat = scripted(ANSWER)
+        make_draft_fn(chat=chat, run_sql=fresh_rows())("why?", [])
+        content = chat.calls[0][0]["content"].lower()
+        for needle in ("left join openfda.recall_by_product_2023_table", "recall_by_product_2024_table", "one decimal"):
+            self.assertIn(needle, content)
+
+    def test_the_double_view_error_comes_back_with_a_hint(self):
+        def fails(sql):
+            raise ValueError(self.DOUBLE_VIEW_ERROR)
+        chat = scripted(ASK, ANSWER)
+        make_draft_fn(chat=chat, run_sql=fails)("why?", [])
+        self.assertIn("once per statement", chat.calls[1][-1]["content"])
+        other = scripted(ASK, ANSWER)  # an unrelated SQL error gets no hint
+        make_draft_fn(chat=other, run_sql=lambda sql: (_ for _ in ()).throw(ValueError("syntax error near FROM")))("why?", [])
+        self.assertNotIn("once per statement", other.calls[1][-1]["content"])
+
+    def test_a_double_view_rejection_carries_the_hint_into_the_next_round(self):
+        hinted = Rejection(Claim("increase", 201), "sql_failed", self.DOUBLE_VIEW_ERROR)
+        plain = Rejection(Claim("increase", 201), "sql_failed", "syntax error near FROM")
+        for rejection, expected in ((hinted, True), (plain, False)):
+            with self.subTest(expected=expected):
+                chat = scripted(ANSWER)
+                make_draft_fn(chat=chat, run_sql=fresh_rows())("why?", [rejection])
+                self.assertEqual("once per statement" in chat.calls[0][1]["content"], expected)
+
     def test_previous_rejections_reach_the_model(self):
         rejection = Rejection(Claim("x", 80), "value_mismatch", "claimed 80 but SELECT ... returned '54'")
         chat = scripted(ANSWER)
