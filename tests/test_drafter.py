@@ -22,10 +22,11 @@ import unittest
 
 from agent.drafter import make_draft_fn
 from agent.evaluator import Rejection, Claim, Citation
-from agent.llm import Reply
+from agent.llm import LLMError, Reply
 
 SQL = "SELECT COUNT(*) AS n FROM openfda.recall_dsy_2024_table"
 ASK = json.dumps({"action": "sql", "sql": SQL})
+SQL2 = "SELECT COUNT(DISTINCT res_event_number) AS n FROM openfda.recall_dsy_2024_table"
 ANSWER = json.dumps({"action": "answer", "text": "DSY had 54 recall records in 2024.",
                      "claims": [{"text": "DSY recall records in 2024", "value": 54,
                                  "sql": SQL, "column": "n", "row": 0}]})
@@ -37,7 +38,10 @@ def scripted(*replies):
 
     def chat(messages, max_tokens=2000):
         calls.append(copy.deepcopy(messages))
-        return Reply(next(queue), "nvidia/test", None)
+        item = next(queue)
+        if isinstance(item, Exception):
+            raise item
+        return Reply(item, "nvidia/test", None)
     chat.calls = calls
     return chat
 
@@ -106,6 +110,50 @@ class Drafter(unittest.TestCase):
         chat = scripted(ANSWER)
         make_draft_fn(chat=chat, run_sql=fresh_rows())("why?", [])
         self.assertTrue(chat.calls[0][0]["content"].startswith("/no_think"))
+
+    # --- fewer, faster turns -------------------------------------------------------
+    def test_several_queries_in_one_turn_run_together(self):
+        two = json.dumps({"action": "sql", "sqls": [SQL, SQL2]})
+        chat, run = scripted(two, ANSWER), fresh_rows()
+        make_draft_fn(chat=chat, run_sql=run)("why?", [])
+        self.assertEqual(run.seen, [SQL, SQL2])
+        fed_back = chat.calls[1][-1]["content"]
+        self.assertIn("Query 1", fed_back)
+        self.assertIn("Query 2", fed_back)
+        self.assertEqual(len(chat.calls), 2)  # one model turn for both queries
+
+    def test_a_batch_is_capped_at_three_queries(self):
+        many = json.dumps({"action": "sql", "sqls": [f"SELECT {i} AS n" for i in range(5)]})
+        chat, run = scripted(many, ANSWER), fresh_rows()
+        make_draft_fn(chat=chat, run_sql=run)("why?", [])
+        self.assertEqual(len(run.seen), 3)
+        self.assertIn("only the first 3", chat.calls[1][-1]["content"])
+
+    def test_system_prompt_has_a_playbook_for_rise_questions(self):
+        chat = scripted(ANSWER)
+        make_draft_fn(chat=chat, run_sql=fresh_rows())("why?", [])
+        content = chat.calls[0][0]["content"].lower()
+        for needle in ("playbook", "step 1", "step 2", "step 3", "distinct"):
+            self.assertIn(needle, content)
+
+    # --- recovering from a model timeout ---------------------------------------------
+    def test_a_failed_turn_is_retried_once_with_a_trimmed_history(self):
+        chat = scripted(ASK, ASK, LLMError("502 provider_deadline"), ANSWER)
+        draft = make_draft_fn(chat=chat, run_sql=fresh_rows())("why?", [])
+        self.assertEqual(len(draft.claims), 1)
+        self.assertEqual(len(chat.calls), 4)
+        failed, retried = chat.calls[2], chat.calls[3]
+        self.assertEqual(len(failed), 6)   # system, question, 2 x (reply + result)
+        self.assertEqual(len(retried), 4)  # system, question, latest reply + result only
+        self.assertEqual(retried[0]["role"], "system")
+        self.assertIn("why?", retried[1]["content"])
+        self.assertEqual(retried[-1], failed[-1])  # the latest results are kept
+
+    def test_a_second_failure_in_a_row_is_raised(self):
+        chat = scripted(LLMError("502 provider_deadline"), LLMError("502 provider_deadline"), ANSWER)
+        with self.assertRaises(LLMError):
+            make_draft_fn(chat=chat, run_sql=fresh_rows())("why?", [])
+        self.assertEqual(len(chat.calls), 2)
 
     def test_previous_rejections_reach_the_model(self):
         rejection = Rejection(Claim("x", 80), "value_mismatch", "claimed 80 but SELECT ... returned '54'")
