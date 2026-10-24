@@ -3,11 +3,13 @@
 The loop owns no model or database logic: `draft_fn` writes a draft with cited
 claims, `evaluate_fn` checks them. It stops at the first draft whose claims all
 resolve, or after `max_rounds` and reports what it could not support.
+A model outage (LLMError) costs one round; other exceptions propagate.
 """
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
 from agent.evaluator import Claim, Rejection, unclaimed_numbers
+from agent.llm import LLMError
 
 
 @dataclass
@@ -37,13 +39,22 @@ def _rejections(draft, evaluate_fn):
 
 
 def investigate(question, draft_fn, evaluate_fn, max_rounds=3):
-    feedback: List[Rejection] = []
+    feedback: List[Rejection] = []  # what the next draft is told
+    unsupported: List[Claim] = []   # what the latest round could not support
     trace: List[dict] = []
     for round_number in range(1, max_rounds + 1):
-        draft = draft_fn(question, feedback)
-        feedback = _rejections(draft, evaluate_fn)
+        try:
+            draft = draft_fn(question, feedback)
+        except LLMError as error:  # an outage costs a round; any other exception is a bug
+            unsupported = [Claim(f"model unavailable: {str(error)[:150]}", None)]
+            trace.append({"round": round_number, "claims": 0, "rejected": 1,
+                          "reasons": ["model_unavailable"]})
+            continue
+        rejections = _rejections(draft, evaluate_fn)
         trace.append({"round": round_number, "claims": len(draft.claims),
-                      "rejected": len(feedback), "reasons": [r.reason for r in feedback]})
-        if not feedback:
+                      "rejected": len(rejections), "reasons": [r.reason for r in rejections]})
+        if not rejections:
             return Result(draft.text, [], round_number, trace)
-    return Result(None, [r.claim for r in feedback], max_rounds, trace)
+        feedback = rejections
+        unsupported = [r.claim for r in rejections]
+    return Result(None, unsupported, max_rounds, trace)

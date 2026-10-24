@@ -22,6 +22,7 @@ import unittest
 from dotenv import load_dotenv
 
 from agent.evaluator import Citation, Claim, evaluate
+from agent.llm import LLMError
 from agent.loop import Draft, investigate
 
 load_dotenv()
@@ -142,6 +143,37 @@ class Loop(unittest.TestCase):
         result = investigate("why?", lambda q, f: Draft(text, [total]), self.evaluator)
         self.assertEqual(result.text, text)
         self.assertEqual(result.rounds, 1)
+
+    def test_a_model_failure_costs_a_round_and_the_run_continues(self):
+        calls = []
+
+        def draft_fn(question, feedback):
+            calls.append(feedback)
+            if len(calls) == 1:
+                raise LLMError("gave up after 5 attempts: 502 provider_deadline")
+            return Draft("DSY had 54 recall records.", [claim(54)])
+
+        result = investigate("why?", draft_fn, self.evaluator)
+        self.assertEqual(result.text, "DSY had 54 recall records.")
+        self.assertEqual(result.rounds, 2)
+        self.assertEqual(result.trace[0]["reasons"], ["model_unavailable"])
+        self.assertEqual(calls[1], [])  # the outage is not shown to the model as a rejection
+
+    def test_every_round_failing_gives_no_answer_and_says_why(self):
+        def draft_fn(question, feedback):
+            raise LLMError("gave up after 5 attempts: 502 provider_deadline")
+
+        result = investigate("why?", draft_fn, self.evaluator, max_rounds=2)
+        self.assertIsNone(result.text)
+        self.assertEqual(result.rounds, 2)
+        self.assertIn("502", result.unsupported[0].text)
+
+    def test_other_exceptions_are_bugs_and_are_not_swallowed(self):
+        def draft_fn(question, feedback):
+            raise RuntimeError("bug in the drafter")
+
+        with self.assertRaises(RuntimeError):
+            investigate("why?", draft_fn, self.evaluator)
 
     def test_trace_has_one_entry_per_round(self):
         result = investigate("why?", lambda q, f: Draft("a", [claim(80)] if not f else [claim(54)]), self.evaluator)
