@@ -116,6 +116,12 @@ class Loop(unittest.TestCase):
         self.assertEqual(seen[0], [])
         self.assertEqual(seen[1][0].reason, "value_mismatch")  # the draft saw why it failed
 
+    def test_the_result_carries_the_accepted_claims(self):
+        result = investigate("why?", lambda q, f: Draft("DSY had 54 recall records.", [claim(54)]), self.evaluator)
+        self.assertEqual(result.claims, [claim(54)])
+        failed = investigate("why?", lambda q, f: Draft("a", [claim(80)]), self.evaluator, max_rounds=1)
+        self.assertEqual(failed.claims, [])
+
     def test_gives_up_after_max_rounds_and_lists_what_it_could_not_support(self):
         result = investigate("why?", lambda q, f: Draft("answer", [claim(80)]), self.evaluator, max_rounds=3)
         self.assertIsNone(result.text)

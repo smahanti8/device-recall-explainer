@@ -24,6 +24,7 @@ class Result:
     unsupported: List[Claim]
     rounds: int
     trace: List[dict] = field(default_factory=list)
+    claims: List[Claim] = field(default_factory=list)  # the accepted draft's claims
 
 
 def _rejections(draft, evaluate_fn):
@@ -54,7 +55,7 @@ def investigate(question, draft_fn, evaluate_fn, max_rounds=3):
         trace.append({"round": round_number, "claims": len(draft.claims),
                       "rejected": len(rejections), "reasons": [r.reason for r in rejections]})
         if not rejections:
-            return Result(draft.text, [], round_number, trace)
+            return Result(draft.text, [], round_number, trace, claims=draft.claims)
         feedback = rejections
         unsupported = [r.claim for r in rejections]
     return Result(None, unsupported, max_rounds, trace)
