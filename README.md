@@ -6,7 +6,7 @@ and refuses to state any number it cannot trace to a query.
 Example question: *Why did cardiovascular device recall records rise between 2023 and 2024,
 and which product codes drove it?*
 
-The data is public openFDA recall, classification and clearance data, registered in Zetaris as
+The data is public openFDA recall and classification data, registered in Zetaris as
 SQL tables. The agent investigates with read-only SQL, then writes an answer in which every
 number is a **claim that cites a cell of a SQL result**. An evaluator re-runs each citation and
 rejects the draft if a claim has no citation, cites the wrong scope, or does not match the cell.
@@ -22,6 +22,7 @@ Rejection reasons go back to the model for another attempt.
 | Data layer (openFDA in Zetaris) | Registered; counts checked against direct openFDA calls |
 | SQL tool, evaluator, retry loop | Covered by unit tests, including checks through live Zetaris |
 | Drafter (model drives the investigation) | Covered by unit tests with a scripted model |
+| Playbook mode (code runs the verified queries, the model explains) | Covered by unit tests with a scripted model, plus a live check that the fact values match direct openFDA calls (281, 482, +201, DSY 53, DQO 49, OEZ 29, top-3 sum 131, share 65.2%) |
 | Memory (H-MEM engine) | Covered by unit tests, the engine's conformance suite and a two-process recall test against the real engine |
 | Model access through Meterless Nightshift | Verified with live calls and saved receipts (`docs/nemotron-evidence.md`) |
 | End-to-end run of `python -m agent.main` | Not yet recorded: earlier live runs hit provider timeouts |
@@ -133,7 +134,7 @@ Register the data as described above, then:
 ```
 
 Options: `--memory-dir DIR` (default `.hmem`), `--no-memory`, `--verbose` (show each rejection's detail) and
-`--playbook` (see below). Progress lines go to stderr while it runs. Exit code is 0 for a verified answer.
+`--playbook` (see "Two ways to draft" above). Progress lines go to stderr while it runs. Exit code is 0 for a verified answer.
 
 ## Tests
 
@@ -148,7 +149,7 @@ openFDA calls, so a bug in a view cannot hide behind its own output.
 ## Layout
 
 ```
-agent/        tools_zetaris.py  evaluator.py  loop.py  drafter.py  llm.py  memory.py  memory_cli.mts  main.py
+agent/        tools_zetaris.py  evaluator.py  loop.py  drafter.py  playbook.py  llm.py  memory.py  memory_cli.mts  main.py
 sql/          Zetaris table and view definitions
 tests/        unit tests and live-service checks
 engines/hmem  vendored H-MEM reference and conformance suite (unmodified)
