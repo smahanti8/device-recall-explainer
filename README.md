@@ -6,6 +6,11 @@ and refuses to state any number it cannot trace to a query.
 Example question: *Why did cardiovascular device recall records rise between 2023 and 2024,
 and which product codes drove it?*
 
+**Product codes.** The FDA gives each type of medical device a three-letter product code in its classification
+database, for example DSY (vascular graft prosthesis), DQO (diagnostic intravascular catheter) or OEZ (cardiovascular
+procedure kit). The codes are read letter by letter, not as words. The agent groups recall records by product code to see
+which device types drove a change.
+
 The data is real, public openFDA recall and classification data (no patient data), registered in Zetaris as
 SQL tables. The agent investigates with read-only SQL, then writes an answer in which every
 number is a **claim that cites a cell of a SQL result**. An evaluator checks each claim against the result of its cited SQL and
