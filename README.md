@@ -77,6 +77,35 @@ covers one question shape (cardiovascular recalls, 2023 against 2024); the explo
 Meterless Nightshift runtime. At most 2 calls run at once, provider errors are retried 5 times
 (waits of 3, 6, 12 and 24 seconds), and every call logs `routed_model` and `receipt_id`.
 
+## Cost, token and reliability controls
+
+Design choices that keep a run small, cheap to inspect and repeatable. Each one is in code and covered by tests.
+
+| Choice | What it does | Where |
+|---|---|---|
+| **Facts instead of raw rows** | In playbook mode the model sees a short numbered list of facts, not query results, and answers with fact ids. Exploratory mode truncates each result it shows the model | `agent/playbook.py`, `agent/drafter.py` |
+| **Schema in the prompt** | The system prompts list the registered views and columns, so the model does not spend turns discovering the schema | `agent/drafter.py`, `agent/playbook.py` |
+| **Two model sizes** | Nemotron 3.5 Lightning is the default. Only a redraft after a rejection goes to the larger model named in `NEMOTRON_ESCALATION_MODEL` (optional); if that call fails, the default model is used | `agent/llm.py`, `agent/playbook.py` |
+| **Query cache** | Identical SQL within a run is fetched once and then served from memory, which saves openFDA rate-limit quota | `agent/tools_zetaris.py` |
+| **Token and cost line** | Every model call's input tokens, output tokens and the cost Nightshift reports are summed and printed as `Tokens:` | `agent/main.py`, `agent/llm.py` |
+| **Observability line** | Each run prints Zetaris queries fetched versus served from cache, calls per model, retries and failed calls. The numbers are counted from what ran | `agent/observability.py` |
+| **Bounded retries** | At most 2 concurrent model calls and 5 attempts per call with backoff; a failed call costs one round, not the run | `agent/llm.py`, `agent/loop.py` |
+| **Structured run log** | A JSONL event per step (agent, action, model, status, retry count, token counts), with secrets redacted | `agent/runlog.py` |
+| **HTML report** | `--report` writes one self-contained page: the answer with each number linked to its proof, rounds, queries, receipts, tokens and the observability panel | `agent/report.py` |
+
+Not done, on purpose: a rolling summary of earlier turns (runs take one to three rounds, so there is nothing to roll), and model routing through Nightshift's `deep`, `fast` or `fusion` modes (they route to the default lane; see "Decisions and failures").
+
+## Running it: terminal or report
+
+The agent is a command line program. The terminal run is the real thing: progress lines, the trace, the model receipts, the token and observability lines. Adding `--report` also writes an HTML page for the same run, which is easier to read than the terminal output and needs no server:
+
+```bash
+.venv/bin/python -m agent.main "<question>" --playbook --report
+open reports/report-*.html      # newest file in reports/
+```
+
+The report is generated from a finished run; it is not a web application and cannot start a run.
+
 ## Agent roles and how they interact
 
 | Role | What it is | Interaction |
@@ -168,6 +197,7 @@ openFDA calls, so a bug in a view cannot hide behind its own output.
 
 ```
 agent/        tools_zetaris.py  evaluator.py  loop.py  drafter.py  playbook.py  llm.py  memory.py  memory_cli.mts  main.py
+              observability.py  report.py  runlog.py  sample_mode.py  setup_data.py
 sql/          Zetaris table and view definitions
 tests/        unit tests and live-service checks
 engines/hmem  vendored H-MEM reference and conformance suite (unmodified)
