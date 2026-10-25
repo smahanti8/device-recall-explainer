@@ -12,6 +12,8 @@ import uuid
 import requests
 from dotenv import load_dotenv
 
+from agent import runlog, sample_mode
+
 load_dotenv()
 
 _CACHE = {}
@@ -48,10 +50,19 @@ def _to_dicts(payload):
     return [dict(zip(names, row)) for row in payload.get("data") or []]
 
 
+def _log(statement, status, summary):
+    runlog.emit("ZetarisTool", "run_sql", input_summary=statement, output_summary=summary, status=status)
+
+
 def run_sql(sql, limit=1000, use_cache=True):
     """Run one read-only statement; return a list of {column: value} dicts."""
     statement = _check(sql)
+    if sample_mode.mode() == "replay":
+        rows = sample_mode.replay_query(statement)
+        _log(statement, "replayed", f"{len(rows)} row(s)")
+        return rows
     if use_cache and statement in _CACHE:
+        _log(statement, "cache_hit", f"{len(_CACHE[statement])} row(s)")
         return _CACHE[statement]
     base = os.environ["ZETARIS_REST_URL"].rstrip("/")
     response = requests.post(
@@ -65,8 +76,12 @@ def run_sql(sql, limit=1000, use_cache=True):
         timeout=60,
     )
     if not response.ok:
-        raise RuntimeError(f"Zetaris returned {response.status_code}: {response.text[:300]}")
+        message = f"Zetaris returned {response.status_code}: {response.text[:300]}"
+        _log(statement, "error", message)
+        raise RuntimeError(message)
     rows = _to_dicts(response.json())
     if use_cache:
         _CACHE[statement] = rows
+    sample_mode.record_query(statement, rows)
+    _log(statement, "success", f"{len(rows)} row(s)")
     return rows

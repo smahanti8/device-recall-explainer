@@ -10,6 +10,7 @@ import re
 import subprocess
 from dataclasses import dataclass
 
+from agent import runlog
 from agent.evaluator import product_codes
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -67,8 +68,10 @@ class Memory:
 
     def recall(self, question, top_n=5):
         reply = self._send(op="query", query=question, topN=top_n)
-        return [Recollection(m["id"], m["content"], m["relevance"], m["source"])
+        hits = [Recollection(m["id"], m["content"], m["relevance"], m["source"])
                 for m in reply.get("memories", [])]
+        runlog.emit("Memory", "recall", input_summary=question, output_summary=f"{len(hits)} hint(s)")
+        return hits
 
     def context_for(self, question):
         hits = self.recall(question)
@@ -104,4 +107,7 @@ class Memory:
             else:
                 report["reinforced" if status == "reinforced" else "new"] += 1
         self.last_learn = report
+        runlog.emit("Memory", "learn", input_summary=f"{len(ids)} verified claim(s)",
+                    output_summary=f"{report['new']} new, {report['reinforced']} reinforced, "
+                                   f"{len(report['changed'])} changed")
         return ids

@@ -15,6 +15,8 @@ from typing import Optional
 import openai
 from dotenv import load_dotenv
 
+from agent import runlog, sample_mode
+
 load_dotenv()
 
 log = logging.getLogger("agent.llm")
@@ -52,6 +54,8 @@ def parse_receipt(body):
 
 
 def _send(messages, max_tokens):
+    if sample_mode.mode() == "replay":
+        return sample_mode.replay_reply(messages)
     client = openai.OpenAI(
         base_url=os.environ["MODEL_BASE_URL"],
         api_key=os.environ["MODEL_API_KEY"],
@@ -67,12 +71,16 @@ def _send(messages, max_tokens):
         raise (TransientError if error.status_code in _TRANSIENT_STATUS else LLMError)(text)
     except (openai.APITimeoutError, openai.APIConnectionError) as error:
         raise TransientError(f"{type(error).__name__}: {str(error)[:200]}")
-    return response.model_dump()
+    body = response.model_dump()
+    sample_mode.record_reply(messages, body)
+    return body
 
 
 def chat(messages, max_tokens=2000, *, send=None, sleep=time.sleep, attempts=5):
     send = send or _send
     last = None
+    last_prompt = messages[-1]["content"][:200] if messages else ""
+    summary = f"{len(messages)} message(s), max_tokens={max_tokens}; last: {last_prompt}"
     for attempt in range(attempts):
         try:
             with _SLOTS:
@@ -80,8 +88,15 @@ def chat(messages, max_tokens=2000, *, send=None, sleep=time.sleep, attempts=5):
             break
         except TransientError as error:
             last = error
-            if attempt < attempts - 1:
+            final = attempt == attempts - 1
+            runlog.emit("ModelClient", "model_call", input_summary=summary, output_summary=str(error),
+                        status="failed" if final else "retry", retry_count=attempt if final else attempt + 1)
+            if not final:
                 sleep(_BASE_DELAY * 2 ** attempt)
+        except LLMError as error:
+            runlog.emit("ModelClient", "model_call", input_summary=summary, output_summary=str(error),
+                        status="failed", retry_count=attempt)
+            raise
     else:
         raise LLMError(f"gave up after {attempts} attempts: {last}")
     receipt = parse_receipt(body)
@@ -89,6 +104,12 @@ def chat(messages, max_tokens=2000, *, send=None, sleep=time.sleep, attempts=5):
              receipt["routed_model"], receipt["receipt_id"], receipt["provider_model"],
              receipt["egress"], receipt["latency_ms"])
     text = body["choices"][0]["message"].get("content") or ""
+    status = "replayed" if sample_mode.mode() == "replay" else "success"
     if not text:
+        runlog.emit("ModelClient", "model_call", input_summary=summary, output_summary="empty reply",
+                    model=receipt["routed_model"], status="failed", retry_count=attempt)
         raise LLMError("empty reply (reasoning model ran out of tokens?): raise max_tokens")
+    runlog.emit("ModelClient", "model_call", input_summary=summary, output_summary=text,
+                model=receipt["routed_model"], status=status, retry_count=attempt,
+                receipt_id=receipt["receipt_id"], egress=receipt["egress"])
     return Reply(text=text, routed_model=receipt["routed_model"], receipt_id=receipt["receipt_id"])
