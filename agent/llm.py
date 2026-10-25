@@ -66,7 +66,13 @@ def parse_usage(body):
             "cost_usd": float((receipt.get("cost") or {}).get("actual_usd") or 0.0)}
 
 
-def _send(messages, max_tokens):
+def escalation_model(env=None):
+    """The optional larger model a redraft is escalated to (NEMOTRON_ESCALATION_MODEL), or None."""
+    value = (os.environ if env is None else env).get("NEMOTRON_ESCALATION_MODEL")
+    return str(value).strip() or None if value else None
+
+
+def _send(messages, max_tokens, model=None):
     if sample_mode.mode() == "replay":
         return sample_mode.replay_reply(messages)
     client = openai.OpenAI(
@@ -78,7 +84,7 @@ def _send(messages, max_tokens):
     )
     try:
         response = client.chat.completions.create(
-            model=os.environ["NEMOTRON_MODEL"], messages=messages, max_tokens=max_tokens)
+            model=model or os.environ["NEMOTRON_MODEL"], messages=messages, max_tokens=max_tokens)
     except openai.APIStatusError as error:
         text = f"{error.status_code} {str(error.message)[:200]}"
         raise (TransientError if error.status_code in _TRANSIENT_STATUS else LLMError)(text)
@@ -89,7 +95,7 @@ def _send(messages, max_tokens):
     return body
 
 
-def chat(messages, max_tokens=2000, *, send=None, sleep=time.sleep, attempts=5):
+def chat(messages, max_tokens=2000, *, send=None, sleep=time.sleep, attempts=5, model=None):
     send = send or _send
     last = None
     last_prompt = messages[-1]["content"][:200] if messages else ""
@@ -97,7 +103,7 @@ def chat(messages, max_tokens=2000, *, send=None, sleep=time.sleep, attempts=5):
     for attempt in range(attempts):
         try:
             with _SLOTS:
-                body = send(messages, max_tokens)
+                body = send(messages, max_tokens) if model is None else send(messages, max_tokens, model=model)
             break
         except TransientError as error:
             last = error

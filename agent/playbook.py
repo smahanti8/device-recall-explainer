@@ -182,13 +182,19 @@ def _has_why(items):
     return any(label in item for item in items for label in _WHY_LABELS)
 
 
+def _call(chat, messages, model):
+    """One model call; the model argument is passed only when a model was chosen."""
+    extra = {"model": model} if model else {}
+    return chat(messages, max_tokens=MAX_TOKENS, **extra).text
+
+
 def _requested_codes(feedback):
     codes = [r.claim.text.split()[0] for r in feedback
              if r.reason == "missing_evidence" and r.claim.text.endswith(" detail")]
     return list(dict.fromkeys(codes))
 
 
-def make_playbook_draft_fn(chat=None, run_sql=None, context_fn=None, on_event=None):
+def make_playbook_draft_fn(chat=None, run_sql=None, context_fn=None, on_event=None, escalation_model=None):
     chat = chat or llm.chat
     run_sql = run_sql or tools_zetaris.run_sql
     fetched = {}      # code -> detail facts fetched on request (kept for later rounds)
@@ -236,11 +242,23 @@ def make_playbook_draft_fn(chat=None, run_sql=None, context_fn=None, on_event=No
         messages = [{"role": "system", "content": SYSTEM},
                     {"role": "user", "content": f"{opening}\n\n{_facts_block(facts)}"}]
         last, fixed_json, fixed_why = None, False, False
+        # after a rejection the redraft's first model call goes to the larger model, when one is configured
+        bigger = (escalation_model or llm.escalation_model()) if feedback else None
+        if bigger:
+            runlog.emit("Drafter", "escalate_model", input_summary="redraft after rejection",
+                        output_summary=f"using {bigger}", model=bigger)
+            if on_event:
+                on_event(f"escalating to {bigger} for the redraft")
         for _ in range(3):  # at most one JSON correction and one "why" correction
+            use, bigger = bigger, None  # only the first call escalates; corrections use the default model
             try:
-                raw = chat(messages, max_tokens=MAX_TOKENS).text
+                raw = _call(chat, messages, use)
             except llm.LLMError:
-                raw = chat(messages, max_tokens=MAX_TOKENS).text
+                if use:
+                    runlog.emit("Drafter", "escalation_fallback", input_summary="redraft after rejection",
+                                output_summary=f"{use} failed; retrying on the default model", model=use,
+                                status="fallback")
+                raw = _call(chat, messages, None)
             reply = _parse(raw)
             if reply is None:
                 if fixed_json:
