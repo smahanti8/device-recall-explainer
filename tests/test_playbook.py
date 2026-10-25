@@ -203,6 +203,36 @@ class PlaybookWhy(unittest.TestCase):
         self.assertEqual(len(chat.calls), 1)
 
 
+class FactIdMarkers(unittest.TestCase):
+    """The model sometimes writes "(f1)" after a number. Ids are for the claims, not for readers."""
+
+    def answer(self, raw_text, facts_used=1):
+        run = fresh_run()
+        facts = collect_facts(run_sql=run)
+        chat = scripted(reply(raw_text, [f.id for f in facts[:facts_used]]))
+        return make_playbook_draft_fn(chat=chat, run_sql=run)("why?", []), chat
+
+    def test_bracketed_fact_ids_are_removed_from_the_text(self):
+        draft, _ = self.answer("Records rose from 281 (f1) to 482 (f2), up 201 [f3] in total (f4, f5).")
+        self.assertEqual(draft.text, "Records rose from 281 to 482, up 201 in total.")
+
+    def test_text_without_markers_is_unchanged(self):
+        text = "Class 2 devices, the f-series and a 5f2 ratio are left alone."
+        self.assertEqual(self.answer(text)[0].text, text)
+
+    def test_removing_markers_does_not_hide_an_unclaimed_number(self):
+        run = fresh_run()
+        facts = collect_facts(run_sql=run)
+        chat = scripted(reply("The total was 482 (f2).", [facts[0].id]))
+        result = investigate("why?", make_playbook_draft_fn(chat=chat, run_sql=run),
+                             lambda claims: evaluate(claims, run_sql=run), max_rounds=1)
+        self.assertEqual(result.trace[0]["reasons"], ["unclaimed_number"])
+
+    def test_the_prompt_tells_the_model_not_to_write_fact_ids(self):
+        chat = self.answer("ok")[1]
+        self.assertIn("never write fact ids", chat.calls[0][0]["content"].lower())
+
+
 @unittest.skipUnless(all(os.environ.get(k) for k in ("ZETARIS_REST_URL", "ZETARIS_ORG_ID", "ZETARIS_API_KEY")),
                      "Zetaris settings missing in .env")
 class ThroughZetaris(unittest.TestCase):

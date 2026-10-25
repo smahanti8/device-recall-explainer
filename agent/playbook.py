@@ -40,6 +40,7 @@ Reply with exactly one JSON object: {"text": "<short explanation>", "facts": ["f
 - Every number in "text" must equal the value of a fact you list; write percentages with the one decimal shown.
 - Records are product-level entries and one recall event can have many records: say "records" or "events" exactly as the facts do.
 - For each product code that has events, root-cause and recalling-firm facts, state how many records came from how many events, the top root cause and the top recalling firm. When a code has few events behind many records, say so: the increase is concentrated in a few events.
+- Never write fact ids (like f1) in "text"; they are only for the "facts" list.
 - Describe what the data shows; make no clinical or safety judgments.
 - If a previous draft was rejected, fix exactly what was listed and keep the rest."""
 
@@ -125,11 +126,17 @@ def _parse(text):
     return parsed if isinstance(parsed, dict) and isinstance(parsed.get("text"), str) else None
 
 
+_FACT_MARKER = re.compile(r"\s*[(\[]\s*f\d+(?:\s*[,;]\s*f\d+)*\s*[)\]]")
 _WHY_LABELS = ("events", "root cause")
 _WHY_PROMPT = ("Your answer cites no recall-event or root-cause fact. For each product code that has them, "
                "state records versus events (events) and the top root cause and recalling firm, "
                "citing those facts. Reply with the same JSON object.")
 _JSON_PROMPT = 'Reply with ONE JSON object only: {"text": "...", "facts": ["f1"]}.'
+
+
+def _without_fact_ids(text):
+    """Ids like "(f1)" or "[f2, f3]" are for the claims list, not for readers."""
+    return _FACT_MARKER.sub("", text)
 
 
 def _has_why(items):
@@ -160,7 +167,7 @@ def make_playbook_draft_fn(chat=None, run_sql=None, context_fn=None):
                 messages += [{"role": "assistant", "content": raw}, {"role": "user", "content": _JSON_PROMPT}]
                 continue
             used = [by_id[i] for i in dict.fromkeys(reply.get("facts") or []) if i in by_id]
-            last = Draft(reply["text"], [Claim(f.label, f.value, f.citation) for f in used])
+            last = Draft(_without_fact_ids(reply["text"]), [Claim(f.label, f.value, f.citation) for f in used])
             if _has_why([f.label for f in facts]) and not _has_why([f.label for f in used]) and not fixed_why:
                 fixed_why = True
                 messages += [{"role": "assistant", "content": raw}, {"role": "user", "content": _WHY_PROMPT}]
