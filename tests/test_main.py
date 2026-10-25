@@ -12,7 +12,10 @@
     parse_args(argv) -> namespace(question, memory_dir, no_memory)
     format_trace(result, receipts=(), verbose=False): with verbose=True each round also lists every
         rejection as "reason: detail" (needs the loop's trace entries to carry "details").
-    parse_args: --verbose is a flag (default off).
+    parse_args: --verbose and --playbook are flags (default off).
+    ask(..., playbook=False, make_playbook=make_playbook_draft_fn): with playbook=True the draft function comes
+        from make_playbook(context_fn=...) (code runs the queries, the model explains) instead of make_draft;
+        the memory hook, progress lines, trace and learning are identical in both modes.
     ask(..., progress=None): live progress lines while the run happens. progress(message) is called for
         "round N: drafting", "round N: K claims checked, R rejected (reasons)" or "all verified",
         "round N: model unavailable", and "model turn T (S.Ss) <routed_model> <receipt_id>".
@@ -161,6 +164,37 @@ class Progress(unittest.TestCase):
         self.assertNotIn("round 1: drafting", "\n".join(printed))
 
 
+class PlaybookMode(unittest.TestCase):
+    def go(self, **ask_kwargs):
+        calls = []
+
+        def make_draft(context_fn=None, **kwargs):
+            calls.append(("exploratory", context_fn))
+            return "draft_fn"
+
+        def make_playbook(context_fn=None, **kwargs):
+            calls.append(("playbook", context_fn))
+            return "draft_fn"
+        ask("why?", ask_kwargs.pop("memory", None), make_draft=make_draft, make_playbook=make_playbook,
+            run_investigation=lambda q, d, e: GOOD, evaluate_fn="evaluate", out=lambda *_: None,
+            progress=lambda m: None, **ask_kwargs)
+        return calls
+
+    def test_the_exploratory_drafter_is_the_default(self):
+        self.assertEqual([name for name, _ in self.go()], ["exploratory"])
+
+    def test_playbook_mode_swaps_the_drafter_and_keeps_the_memory_hook(self):
+        memory = FakeMemory(context="HINTS")
+        (name, context_fn), = self.go(playbook=True, memory=memory)
+        self.assertEqual(name, "playbook")
+        self.assertEqual(context_fn("why?"), "HINTS")
+
+    def test_playbook_mode_still_learns_from_a_verified_run(self):
+        memory = FakeMemory()
+        self.go(playbook=True, memory=memory)
+        self.assertEqual(memory.learned, [([CLAIM], [])])
+
+
 class Trace(unittest.TestCase):
     def test_each_round_and_the_answer_are_shown(self):
         text = format_trace(GOOD)
@@ -204,6 +238,8 @@ class Cli(unittest.TestCase):
         self.assertEqual(parse_args(["why?", "--memory-dir", "/tmp/m"]).memory_dir, "/tmp/m")
         self.assertFalse(args.verbose)
         self.assertTrue(parse_args(["why?", "--verbose"]).verbose)
+        self.assertFalse(args.playbook)
+        self.assertTrue(parse_args(["why?", "--playbook"]).playbook)
 
 
 if __name__ == "__main__":

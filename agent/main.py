@@ -1,4 +1,4 @@
-"""Command line: python -m agent.main "<question>" [--memory-dir .hmem] [--no-memory] [--verbose]
+"""Command line: python -m agent.main "<question>" [--memory-dir .hmem] [--no-memory] [--verbose] [--playbook]
 
 Runs the investigation (draft -> evaluate -> retry), prints the trace with the
 model receipts, and remembers the claims that were verified.
@@ -12,6 +12,7 @@ from agent.drafter import make_draft_fn
 from agent.evaluator import evaluate, unclaimed_numbers
 from agent.llm import LLMError
 from agent.loop import investigate
+from agent.playbook import make_playbook_draft_fn
 from agent.memory import Memory
 
 _RECEIPT = re.compile(r"routed_model=(\S+) receipt_id=(\S+)")
@@ -76,10 +77,12 @@ def _stderr(message):
     print(message, file=sys.stderr, flush=True)  # sys.stderr is looked up at call time
 
 
-def ask(question, memory=None, *, make_draft=make_draft_fn, run_investigation=investigate,
-        evaluate_fn=evaluate, out=print, progress=None, verbose=False):
+def ask(question, memory=None, *, make_draft=make_draft_fn, make_playbook=make_playbook_draft_fn,
+        run_investigation=investigate, evaluate_fn=evaluate, out=print, progress=None,
+        verbose=False, playbook=False):
     progress = progress or _stderr
-    inner = make_draft(context_fn=memory.context_for if memory is not None else None)
+    make = make_playbook if playbook else make_draft
+    inner = make(context_fn=memory.context_for if memory is not None else None)
     state = {"round": 0, "turn": 0, "draft": None}
 
     def draft_fn(question, feedback):
@@ -125,13 +128,15 @@ def parse_args(argv=None):
     parser.add_argument("--memory-dir", default=".hmem")
     parser.add_argument("--no-memory", action="store_true")
     parser.add_argument("--verbose", action="store_true", help="show each rejection's reason and detail")
+    parser.add_argument("--playbook", action="store_true",
+                        help="code runs the fixed queries and the model only explains (faster, more reliable)")
     return parser.parse_args(argv)
 
 
 def main(argv=None):
     args = parse_args(argv)
     memory = None if args.no_memory else Memory(args.memory_dir)
-    return 0 if ask(args.question, memory, verbose=args.verbose).text else 1
+    return 0 if ask(args.question, memory, verbose=args.verbose, playbook=args.playbook).text else 1
 
 
 if __name__ == "__main__":
