@@ -44,3 +44,20 @@ a cache of identical prompts, and the value 45001 recurs across different calls,
 measure of model speed. The wall-clock column above is what the run actually took.
 
 Reproduce: `.venv/bin/python -m agent.main --playbook --verbose --no-memory "<question>"`.
+
+## Memory demo: two runs per session, memory on
+
+Receipts from the command line's "Model receipts" output, from two sessions of two runs each:
+`python -m agent.main --playbook --verbose "<question>"`, run twice with the same memory
+directory, which was cleared before each session. Every call was routed to
+`nvidia/nemotron-3.5-lightning-30b-a3b`. Session 2 ran after the answer-text cleanup in commit 569ee6f.
+
+| Session | Run | Memory at the start | Claims verified | Receipts |
+|---|---|---|---|---|
+| 1 | 1 | nothing recalled yet | 22, round 1 | rcpt_req_4eyajant |
+| 1 | 2 | recalled 4 hints | 25, round 1 | rcpt_req_vvdfl9va, rcpt_req_w9u17fet |
+| 2 | 1 | nothing recalled yet | 22, round 1 | rcpt_req_sx5b9lbm |
+| 2 | 2 | recalled 4 hints | 22, round 1 | rcpt_req_xkqh4x5l, rcpt_req_dzso08xp |
+
+The second run of each session makes two model calls. Recalled hints are labelled as hints, not
+evidence: every number in the answer still cites fresh SQL, which the evaluator re-runs.
