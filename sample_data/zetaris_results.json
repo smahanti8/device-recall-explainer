@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-10-25T06:26:52Z",
+  "recorded_at": "2026-10-25T14:09:07Z",
   "source": "real run",
   "queries": {
     "SELECT c.product_code AS code, c.device_name AS device, COALESCE(b.recall_count,0) - COALESCE(a.recall_count,0) AS change FROM openfda.classification_cardiovascular_table c LEFT JOIN openfda.recall_by_product_2023_table a ON a.product_code = c.product_code LEFT JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code ORDER BY change DESC LIMIT 5": [
