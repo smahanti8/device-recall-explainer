@@ -311,6 +311,19 @@ Major decisions, with what was rejected and what each one costs. Failures are li
 
 **Fallback and limits:** provider failures are retried and recorded as a failed round; see "Known limits" for what is not covered.
 
+## Responsible use
+
+| Area | What the agent does |
+|---|---|
+| Input validation | A question over 500 characters is refused. SQL must pass the guard (one `SELECT`/`WITH`, `openfda` tables only, no write keywords). Missing settings stop the run with a message that names them |
+| Safe handling of content | The question and the openFDA text that reaches the model are treated as untrusted: the model has no tool except guarded, read-only SQL, and it cannot make a number appear in the answer without a claim that the evaluator verifies. The HTML report escapes everything that comes from a run. Secrets are redacted from run logs |
+| No unauthorised actions | The agent only reads (guarded SQL over public data). It writes only to local files: run logs, reports, the memory folder and, when asked, sample recordings |
+| Human review | The output is descriptive statistics for a person to read. Every number links to the SQL and cell that back it, so a reviewer can check it before anyone acts on it. Nothing is decided or sent on the user's behalf |
+| Disclaimer | Not medical or regulatory advice. openFDA's own notice applies (https://open.fda.gov/terms/) |
+| Logging and traceability | A JSONL event per step in `logs/` (agent, action, model, status, retry count), a receipt per model call, and an optional HTML report |
+| Error handling | Provider errors are retried with backoff, a stuck run stops at `--timeout`, and a run that cannot verify its answer prints no answer and says why |
+| Stated limits | See "Known limits". One of them matters here: the number check exempts integers below 10 and years, and it matches a number to a claim's value, not to its meaning, so a reviewer should still read the claims |
+
 ## Known limits
 
 - Playbook mode answers one question shape; the exploratory mode is general but has not yet produced a verified answer in live runs (the evaluator rejected each draft).
