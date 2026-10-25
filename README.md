@@ -137,6 +137,24 @@ Docker Desktop for Mac `localhost` inside the container is the container itself,
 
 To record again from live services: `--record sample_data` on a live run.
 
+## Examples
+
+Three sample questions, each recorded from a real run, replay offline with `SAMPLE_MODE=true` (see "Sample mode") and are
+checked by `tests/test_sample_examples.py`. A fourth sample, in the default exploratory mode, shows the gate refusing to
+print an answer it could not verify.
+
+| # | Question | Mode | Result | Log and report |
+|---|---|---|---|---|
+| 1 | Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it? | `--playbook` | 2 rounds, 35 claims verified. Round 1 was rejected for missing evidence (DQK, DPT), researched, and redrafted on Nemotron Ultra. "Cardiovascular device recall records rose from 281 in 2023 to 482 in 2024, an increase of 201 records. The three product codes with the largest increases (DSY, DQO, OEZ) together added 131 records, accounting for 65.2% of the total rise..." | `logs/sample-run-1.jsonl`, `reports/sample-run-1.html` |
+| 2 | Which three product codes drove the increase in cardiovascular device recalls from 2023 to 2024, and what share of the increase do they account for? | `--playbook` | 1 round, 20 claims verified. The top three codes (DSY, DQO, OEZ) added 131 of the 201 records, 65.2% | `logs/sample-run-2.jsonl`, `reports/sample-run-2.html` |
+| 3 | For product code DSY, how many 2024 recall records were there, how many distinct recall events and firms, and what was the top root cause? | `--playbook` | 1 round, 4 claims verified. "DSY had 54 recall records in 2024 from 1 event involving 1 firm, with the top root cause Equipment maintenance." | `logs/sample-run-3.jsonl`, `reports/sample-run-3.html` |
+| 4 | The question from sample 1 | default (exploratory) | 3 rounds, no verified answer: the evaluator rejected every draft (SQL Zetaris could not run, a share figure the SQL did not return, numbers in the text that no claim backed) | `logs/sample-exploratory-run-1.jsonl`, `reports/sample-exploratory-run-1.html` |
+
+Samples 1 to 3 are different questions, but they draw on the same fixed set of facts: the playbook collects the same
+queries whatever is asked, and the model chooses which verified facts to use, so the samples differ in focus (a narrow
+question gets a narrow answer) and not in analysis. Sample 2 was run twice; both runs verified 20 claims, and the recording
+holds the later run's reply. The exploratory mode (sample 4) is the only one where the model writes its own SQL.
+
 ## Agent roles and how they interact
 
 | Role | What it is | Interaction |
