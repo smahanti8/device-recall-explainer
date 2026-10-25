@@ -11,9 +11,11 @@ Run: .venv/bin/python -m unittest discover -s tests -v
 """
 import os
 import unittest
+from unittest import mock
 
 from dotenv import load_dotenv
 
+from agent import tools_zetaris
 from agent.tools_zetaris import run_sql
 
 load_dotenv()
@@ -57,6 +59,53 @@ class SafetyRules(unittest.TestCase):
     def test_rejects_empty(self):
         with self.assertRaises(ValueError):
             run_sql("   ")
+
+
+FAKE_ENV = {"ZETARIS_REST_URL": "http://zetaris.test/api", "ZETARIS_ORG_ID": "1", "ZETARIS_API_KEY": "test-key"}
+
+
+class ResultCache(unittest.TestCase):
+    """Within one process the same SQL text is fetched once (openFDA rate-limits; demos stay repeatable)."""
+
+    def setUp(self):
+        tools_zetaris._CACHE.clear()
+        self.addCleanup(tools_zetaris._CACHE.clear)
+        env = mock.patch.dict(os.environ, FAKE_ENV)
+        env.start()
+        self.addCleanup(env.stop)
+        post = mock.patch("agent.tools_zetaris.requests.post")
+        self.post = post.start()
+        self.addCleanup(post.stop)
+        self.post.return_value = mock.Mock(ok=True, json=lambda: {"headers": ["n"], "data": [["54"]]})
+
+    def test_the_same_sql_is_fetched_once(self):
+        first, second = run_sql("SELECT 54 AS n"), run_sql("SELECT 54 AS n")
+        self.assertEqual(first, [{"n": "54"}])
+        self.assertEqual(second, first)
+        self.assertEqual(self.post.call_count, 1)
+
+    def test_trailing_semicolons_and_spaces_do_not_defeat_the_cache(self):
+        run_sql("SELECT 54 AS n")
+        run_sql("  SELECT 54 AS n ;")
+        self.assertEqual(self.post.call_count, 1)
+
+    def test_different_sql_is_fetched_separately(self):
+        run_sql("SELECT 54 AS n")
+        run_sql("SELECT 55 AS n")
+        self.assertEqual(self.post.call_count, 2)
+
+    def test_use_cache_false_always_goes_to_zetaris(self):
+        run_sql("SELECT 54 AS n", use_cache=False)
+        run_sql("SELECT 54 AS n", use_cache=False)
+        self.assertEqual(self.post.call_count, 2)
+
+    def test_a_failed_request_is_not_cached(self):
+        self.post.return_value = mock.Mock(ok=False, status_code=500, text="boom")
+        with self.assertRaises(RuntimeError):
+            run_sql("SELECT 54 AS n")
+        self.post.return_value = mock.Mock(ok=True, json=lambda: {"headers": ["n"], "data": [["54"]]})
+        self.assertEqual(run_sql("SELECT 54 AS n"), [{"n": "54"}])
+        self.assertEqual(self.post.call_count, 2)
 
 
 @integration
