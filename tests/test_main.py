@@ -88,6 +88,18 @@ class Ask(unittest.TestCase):
         self.assertEqual(memory.learned, [([CLAIM], [])])
         self.assertIn("remembered 1", "\n".join(lines))
 
+    def test_the_memory_line_reports_new_reinforced_and_changed(self):
+        memory = FakeMemory()
+        memory.last_learn = {"new": 3, "reinforced": 19, "changed": [{
+            "text": "DSY recall records in 2024",
+            "was": "DSY recall records in 2024: 54", "now": "DSY recall records in 2024: 60"}]}
+        _, lines, _ = run(GOOD, memory)
+        shown = "\n".join(lines)
+        self.assertIn("3 new, 19 reinforced, 1 changed", shown)
+        self.assertIn("changed since last session", shown)
+        self.assertIn("DSY recall records in 2024: 54", shown)
+        self.assertIn("DSY recall records in 2024: 60", shown)
+
     def test_a_run_that_gave_up_remembers_nothing(self):
         memory = FakeMemory()
         run(GAVE_UP, memory)

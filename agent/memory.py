@@ -50,16 +50,20 @@ class Memory:
     def __init__(self, persist_dir, run=None):
         self.persist_dir = os.path.abspath(str(persist_dir))  # Node runs from engines/hmem, so never pass a relative path
         self._run = run or _node_run
+        self.last_learn = {"new": 0, "reinforced": 0, "changed": []}
 
     def _send(self, **request):
         return self._run({"persistDir": self.persist_dir, **request})
 
-    def remember(self, claim):
+    @staticmethod
+    def _record(claim):
         if claim.citation is None:
             raise ValueError("a claim without a citation cannot be remembered (H-MEM needs a source)")
-        record = {"content": f"{claim.text}: {claim.value}", "type": "factual", "tags": _tags(claim),
-                  "confidence": 0.9, "source": claim.citation.sql}
-        return self._send(op="add", record=record)["id"]
+        return {"content": f"{claim.text}: {claim.value}", "type": "factual", "tags": _tags(claim),
+                "confidence": 0.9, "source": claim.citation.sql}
+
+    def remember(self, claim):
+        return self._send(op="add", record=self._record(claim))["id"]
 
     def recall(self, question, top_n=5):
         reply = self._send(op="query", query=question, topN=top_n)
@@ -84,13 +88,20 @@ class Memory:
         self.feedback(memory_id, "wrong")
 
     def learn(self, claims, rejections):
-        """Store the claims that passed the evaluator, each confirmed with 'helpful' feedback."""
+        """Upsert the claims that passed the evaluator; last_learn reports new, reinforced and changed."""
         rejected = [rejection.claim for rejection in rejections]
+        report = {"new": 0, "reinforced": 0, "changed": []}
         ids = []
         for claim in claims:
             if claim.citation is None or claim in rejected:
                 continue
-            memory_id = self.remember(claim)
-            self.feedback(memory_id, "helpful")
-            ids.append(memory_id)
+            reply = self._send(op="upsert", key=claim.text, record=self._record(claim))
+            ids.append(reply["id"])
+            status = reply.get("status", "new")
+            if status == "changed":
+                report["changed"].append({"text": claim.text, "was": reply.get("previous", ""),
+                                          "now": f"{claim.text}: {claim.value}"})
+            else:
+                report["reinforced" if status == "reinforced" else "new"] += 1
+        self.last_learn = report
         return ids

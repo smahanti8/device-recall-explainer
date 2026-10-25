@@ -129,7 +129,15 @@ def ask(question, memory=None, *, make_draft=make_draft_fn, make_playbook=make_p
     out(format_trace(result, receipts.items, verbose))
     if memory is not None and result.text:
         try:
-            out(f"Memory: remembered {len(memory.learn(result.claims, []))} verified claims")
+            ids = memory.learn(result.claims, [])
+            report = getattr(memory, "last_learn", None)
+            if report:
+                out(f"Memory: {report['new']} new, {report['reinforced']} reinforced, "
+                    f"{len(report['changed'])} changed")
+                for change in report["changed"]:
+                    out(f"  changed since last session: {change['was']}  ->  {change['now']}")
+            else:
+                out(f"Memory: remembered {len(ids)} verified claims")
         except Exception as error:  # memory is optional; never lose a verified answer to it
             out(f"note: memory unavailable ({error}); the answer above is unaffected")
     return result
