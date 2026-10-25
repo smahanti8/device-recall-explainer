@@ -10,6 +10,7 @@ import os
 
 MAX_TEXT = 500
 _SECRET_NAMES = ("KEY", "TOKEN", "SECRET", "PASSWORD")
+_COUNTS = {"input_tokens", "output_tokens", "total_tokens"}  # token counts are not secrets
 _current = None
 
 
@@ -40,7 +41,7 @@ class RunLog:
             "target_agent": target_agent, "model": model, "status": status, "retry_count": retry_count,
         }
         for name, value in extra.items():
-            if not any(mark in name.upper() for mark in _SECRET_NAMES):
+            if name in _COUNTS or not any(mark in name.upper() for mark in _SECRET_NAMES):
                 event[name] = self._clean(value)
         try:
             os.makedirs(self.dir, exist_ok=True)

@@ -10,3 +10,8 @@ node_modules/
 logs/*
 !logs/.gitkeep
 !logs/sample-*.jsonl
+
+# HTML reports: ignored, except the keep file and the committed sample reports
+reports/*
+!reports/.gitkeep
+!reports/sample-*.html

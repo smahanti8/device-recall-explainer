@@ -17,6 +17,7 @@ from agent import runlog, sample_mode
 load_dotenv()
 
 _CACHE = {}
+_QUERY_LOG = []
 _COLUMN_KEYS = ("columns", "columnNames", "column_names", "schema", "headers", "fields")
 
 
@@ -50,8 +51,25 @@ def _to_dicts(payload):
     return [dict(zip(names, row)) for row in payload.get("data") or []]
 
 
-def _log(statement, status, summary):
+def _log(statement, status, summary, rows=0):
+    _QUERY_LOG.append({"sql": statement, "status": status, "rows": rows})
     runlog.emit("ZetarisTool", "run_sql", input_summary=statement, output_summary=summary, status=status)
+
+
+def query_log():
+    return [dict(entry) for entry in _QUERY_LOG]
+
+
+def clear_query_log():
+    _QUERY_LOG.clear()
+
+
+def peek(sql):
+    """Rows already fetched (or recorded) for this SQL, without a query, a log event or a network call."""
+    statement = _check(sql)
+    if sample_mode.mode() == "replay":
+        return sample_mode.replay_query(statement)
+    return _CACHE[statement]
 
 
 def run_sql(sql, limit=1000, use_cache=True):
@@ -59,10 +77,10 @@ def run_sql(sql, limit=1000, use_cache=True):
     statement = _check(sql)
     if sample_mode.mode() == "replay":
         rows = sample_mode.replay_query(statement)
-        _log(statement, "replayed", f"{len(rows)} row(s)")
+        _log(statement, "replayed", f"{len(rows)} row(s)", len(rows))
         return rows
     if use_cache and statement in _CACHE:
-        _log(statement, "cache_hit", f"{len(_CACHE[statement])} row(s)")
+        _log(statement, "cache_hit", f"{len(_CACHE[statement])} row(s)", len(_CACHE[statement]))
         return _CACHE[statement]
     base = os.environ["ZETARIS_REST_URL"].rstrip("/")
     response = requests.post(
@@ -83,5 +101,5 @@ def run_sql(sql, limit=1000, use_cache=True):
     if use_cache:
         _CACHE[statement] = rows
     sample_mode.record_query(statement, rows)
-    _log(statement, "success", f"{len(rows)} row(s)")
+    _log(statement, "success", f"{len(rows)} row(s)", len(rows))
     return rows

@@ -28,6 +28,10 @@ def mode():
     return _state["mode"]
 
 
+def recorded_at():
+    return _state["recorded_at"]
+
+
 def _reset():
     _state.update(mode=None, dir=None, queries={}, replies={}, recorded_at=None, model=None)
 

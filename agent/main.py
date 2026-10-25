@@ -4,6 +4,7 @@ Runs the investigation (draft -> evaluate -> retry), prints the trace with the
 model receipts, and remembers the claims that were verified.
 """
 import argparse
+import datetime
 import logging
 import os
 import re
@@ -15,6 +16,8 @@ from agent.evaluator import Verdict, evaluate, unclaimed_numbers
 from agent.llm import LLMError
 from agent.loop import investigate
 from agent.playbook import make_playbook_draft_fn
+from agent import report as run_report
+from agent import tools_zetaris
 from agent.runlog import RunLog
 from agent.sample_mode import SampleModeError
 from agent.memory import Memory
@@ -23,6 +26,14 @@ REQUIRED_SETTINGS = ("ZETARIS_REST_URL", "ZETARIS_ORG_ID", "ZETARIS_API_KEY",
                      "MODEL_BASE_URL", "MODEL_API_KEY", "NEMOTRON_MODEL")
 _RECEIPT = re.compile(r"routed_model=(\S+) receipt_id=(\S+)")
 _LATENCY = re.compile(r"latency_ms=(\S+)")
+_TOKENS = re.compile(r"input_tokens=(\S+) output_tokens=(\S+) cost_usd=(\S+)")
+
+
+def _number(text, kind=float):
+    try:
+        return kind(float(text))
+    except (TypeError, ValueError):
+        return kind(0)
 
 
 class ReceiptCollector(logging.Handler):
@@ -31,7 +42,8 @@ class ReceiptCollector(logging.Handler):
     def __init__(self, on_receipt=None):
         super().__init__(logging.INFO)
         self.items = []
-        self.on_receipt = on_receipt  # called with routed_model, receipt_id and latency_ms
+        self.tokens = {"calls": 0, "input": 0, "output": 0, "cost_usd": 0.0}
+        self.on_receipt = on_receipt  # called with routed_model, receipt_id, latency_ms and the token counts
 
     def emit(self, record):
         message = record.getMessage()
@@ -39,9 +51,16 @@ class ReceiptCollector(logging.Handler):
         if match:
             receipt_id = None if match.group(2) == "None" else match.group(2)
             self.items.append({"routed_model": match.group(1), "receipt_id": receipt_id})
+            counts = _TOKENS.search(message)
+            used = (_number(counts.group(1), int), _number(counts.group(2), int), _number(counts.group(3))) if counts else (0, 0, 0.0)
+            self.tokens["calls"] += 1
+            self.tokens["input"] += used[0]
+            self.tokens["output"] += used[1]
+            self.tokens["cost_usd"] += used[2]
             if self.on_receipt:
                 latency = _LATENCY.search(message)
-                self.on_receipt({**self.items[-1], "latency_ms": latency.group(1) if latency else None})
+                self.on_receipt({**self.items[-1], "latency_ms": latency.group(1) if latency else None,
+                                 "input_tokens": used[0], "output_tokens": used[1], "cost_usd": used[2]})
 
     def __enter__(self):
         self._log = logging.getLogger("agent.llm")
@@ -56,7 +75,7 @@ class ReceiptCollector(logging.Handler):
         self._log.setLevel(self._level)
 
 
-def format_trace(result, receipts=(), verbose=False):
+def format_trace(result, receipts=(), verbose=False, tokens=None):
     lines = ["Trace"]
     for entry in result.trace:
         outcome = (f"{entry['rejected']} rejected ({', '.join(entry['reasons'])})"
@@ -76,6 +95,9 @@ def format_trace(result, receipts=(), verbose=False):
     if receipts:
         lines.append("Model receipts:")
         lines += [f"  {item['routed_model']}  {item['receipt_id']}" for item in receipts]
+    if tokens and tokens.get("calls"):
+        lines.append(f"Tokens: {tokens['calls']} model call(s), {tokens['input']:,} in, {tokens['output']:,} out; "
+                     f"cost reported by Nightshift: ${tokens['cost_usd']:.4f}")
     return "\n".join(lines)
 
 
@@ -83,11 +105,44 @@ def _stderr(message):
     print(message, file=sys.stderr, flush=True)  # sys.stderr is looked up at call time
 
 
+def _report_data(result, question, state, receipts, queries, timeline, memory_line, lookup, now):
+    """Everything the HTML report shows, read from this run's own objects."""
+    claims = []
+    for n, claim in enumerate(result.claims, start=1):
+        cite = claim.citation
+        try:
+            cell = lookup(cite.sql)[cite.row][cite.column]
+        except Exception:
+            cell = "unavailable"
+        claims.append({"n": n, "text": claim.text, "value": claim.value, "sql": cite.sql, "column": cite.column,
+                       "row": cite.row, "cell": cell, "status": "verified"})
+    if not result.text:
+        for n, claim in enumerate(result.unsupported, start=len(claims) + 1):
+            cite = claim.citation
+            claims.append({"n": n, "text": claim.text, "value": claim.value, "sql": cite.sql if cite else "",
+                           "column": cite.column if cite else "", "row": cite.row if cite else "",
+                           "cell": "", "status": "unsupported"})
+    replay = sample_mode.mode() == "replay"
+    return {"question": question, "answer": result.text, "claims": claims, "rounds": result.trace,
+            "queries": queries, "receipts": receipts.items, "tokens": receipts.tokens, "hints": state["hints"],
+            "memory": memory_line, "timeline": timeline,
+            "mode": "sample" if replay else "record" if sample_mode.mode() == "record" else "live",
+            "generated_at": (now or datetime.datetime.utcnow)().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "recorded_at": sample_mode.recorded_at() if replay else None}
+
+
 def _ask(question, memory, *, make_draft, make_playbook, run_investigation, evaluate_fn, out, progress,
-         verbose, playbook, log):
-    progress = progress or _stderr
+         verbose, playbook, log, report_dir, run_sql, now):
+    raw_progress = progress or _stderr
+    timeline = []
+
+    def progress(message):  # every progress line is also kept for the report's timeline
+        timeline.append(message)
+        raw_progress(message)
     make = make_playbook if playbook else make_draft
     state = {"round": 0, "turn": 0, "draft": None, "hints": []}
+    memory_line = None
+    tools_zetaris.clear_query_log()
     runlog.emit("Orchestrator", "run_start", input_summary=question, question=question, playbook=playbook,
                 memory=memory is not None, sample_mode=sample_mode.mode() == "replay",
                 recording=sample_mode.mode() == "record")
@@ -139,6 +194,7 @@ def _ask(question, memory, *, make_draft, make_playbook, run_investigation, eval
 
     with ReceiptCollector(model_turn) as receipts:
         result = run_investigation(question, draft_fn, checked)
+    queries = tools_zetaris.query_log()
     runlog.emit("Orchestrator", "run_end", output_summary=f"{result.rounds} round(s)",
                 status="verified" if result.text else "gave_up", rounds=result.rounds,
                 claims=len(result.claims))
@@ -146,35 +202,43 @@ def _ask(question, memory, *, make_draft, make_playbook, run_investigation, eval
         out(f"Recalled from earlier sessions ({len(state['hints'])}):")
         for hint in state["hints"]:
             out(f"  {hint}")
-    out(format_trace(result, receipts.items, verbose))
+    out(format_trace(result, receipts.items, verbose, tokens=receipts.tokens))
     if memory is not None and result.text:
         try:
             ids = memory.learn(result.claims, [])
             report = getattr(memory, "last_learn", None)
             if report:
-                out(f"Memory: {report['new']} new, {report['reinforced']} reinforced, "
-                    f"{len(report['changed'])} changed")
+                memory_line = (f"Memory: {report['new']} new, {report['reinforced']} reinforced, "
+                               f"{len(report['changed'])} changed")
+                out(memory_line)
                 for change in report["changed"]:
                     out(f"  changed since last session: {change['was']}  ->  {change['now']}")
             else:
-                out(f"Memory: remembered {len(ids)} verified claims")
+                memory_line = f"Memory: remembered {len(ids)} verified claims"
+                out(memory_line)
         except Exception as error:  # memory is optional; never lose a verified answer to it
             out(f"note: memory unavailable ({error}); the answer above is unaffected")
     if log:
         out(f"note: could not write the run log ({log.error})" if log.failed else f"Log: {log.path}")
+    if report_dir:
+        data = _report_data(result, question, state, receipts, queries, timeline, memory_line,
+                            run_sql or tools_zetaris.peek, now)
+        path = run_report.write(data, report_dir, now=now)
+        out(f"Report: {path}" if path else f"note: could not write the report (nothing could be written to {report_dir})")
     return result
 
 
 def ask(question, memory=None, *, make_draft=make_draft_fn, make_playbook=make_playbook_draft_fn,
         run_investigation=investigate, evaluate_fn=evaluate, out=print, progress=None,
-        verbose=False, playbook=False, log_dir=None, now=None):
+        verbose=False, playbook=False, log_dir=None, now=None, report_dir=None, run_sql=None):
     log = RunLog(log_dir, now=now) if log_dir else None
     if log:
         runlog.start(log)
     try:
         return _ask(question, memory, make_draft=make_draft, make_playbook=make_playbook,
                     run_investigation=run_investigation, evaluate_fn=evaluate_fn, out=out, progress=progress,
-                    verbose=verbose, playbook=playbook, log=log)
+                    verbose=verbose, playbook=playbook, log=log, report_dir=report_dir,
+                    run_sql=run_sql, now=now)
     finally:
         if log:
             runlog.stop()
@@ -186,6 +250,8 @@ def parse_args(argv=None):
     parser.add_argument("--memory-dir", default=".hmem")
     parser.add_argument("--no-memory", action="store_true")
     parser.add_argument("--verbose", action="store_true", help="show each rejection's reason and detail")
+    parser.add_argument("--report", action="store_true", help="also write a self-contained HTML report of the run")
+    parser.add_argument("--report-dir", default="reports", help="where the HTML report is written")
     parser.add_argument("--log-dir", default="logs", help="write a structured run log here")
     parser.add_argument("--no-log", action="store_true", help="do not write a run log")
     parser.add_argument("--sample", action="store_true",
@@ -230,7 +296,8 @@ def main(argv=None, env=None, ask_fn=None):
         memory = None if args.no_memory else Memory(args.memory_dir)
         run = ask_fn or ask
         result = run(args.question, memory, verbose=args.verbose, playbook=args.playbook,
-                     log_dir=None if args.no_log else args.log_dir)
+                     log_dir=None if args.no_log else args.log_dir,
+                     report_dir=args.report_dir if args.report else None)
     except SampleModeError as error:
         print(str(error), file=sys.stderr)
         return 2

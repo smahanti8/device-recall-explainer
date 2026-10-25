@@ -38,6 +38,9 @@ class Reply:
     text: str
     routed_model: str
     receipt_id: Optional[str]
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cost_usd: float = 0.0
 
 
 def parse_receipt(body):
@@ -51,6 +54,16 @@ def parse_receipt(body):
         "egress": (meterless.get("egress") or {}).get("destination"),
         "latency_ms": (receipt.get("usage") or {}).get("latency_ms"),
     }
+
+
+def parse_usage(body):
+    """Token counts and cost as the response reports them (zeros when absent)."""
+    usage = body.get("usage") or {}
+    receipt = (body.get("meterless") or {}).get("receipt") or {}
+    from_receipt = receipt.get("usage") or {}
+    return {"input_tokens": int(usage.get("prompt_tokens") or from_receipt.get("input_tokens") or 0),
+            "output_tokens": int(usage.get("completion_tokens") or from_receipt.get("output_tokens") or 0),
+            "cost_usd": float((receipt.get("cost") or {}).get("actual_usd") or 0.0)}
 
 
 def _send(messages, max_tokens):
@@ -100,9 +113,12 @@ def chat(messages, max_tokens=2000, *, send=None, sleep=time.sleep, attempts=5):
     else:
         raise LLMError(f"gave up after {attempts} attempts: {last}")
     receipt = parse_receipt(body)
-    log.info("routed_model=%s receipt_id=%s provider_model=%s egress=%s latency_ms=%s",
+    usage = parse_usage(body)
+    log.info("routed_model=%s receipt_id=%s provider_model=%s egress=%s latency_ms=%s "
+             "input_tokens=%s output_tokens=%s cost_usd=%s",
              receipt["routed_model"], receipt["receipt_id"], receipt["provider_model"],
-             receipt["egress"], receipt["latency_ms"])
+             receipt["egress"], receipt["latency_ms"], usage["input_tokens"], usage["output_tokens"],
+             usage["cost_usd"])
     text = body["choices"][0]["message"].get("content") or ""
     status = "replayed" if sample_mode.mode() == "replay" else "success"
     if not text:
@@ -111,5 +127,5 @@ def chat(messages, max_tokens=2000, *, send=None, sleep=time.sleep, attempts=5):
         raise LLMError("empty reply (reasoning model ran out of tokens?): raise max_tokens")
     runlog.emit("ModelClient", "model_call", input_summary=summary, output_summary=text,
                 model=receipt["routed_model"], status=status, retry_count=attempt,
-                receipt_id=receipt["receipt_id"], egress=receipt["egress"])
-    return Reply(text=text, routed_model=receipt["routed_model"], receipt_id=receipt["receipt_id"])
+                receipt_id=receipt["receipt_id"], egress=receipt["egress"], **usage)
+    return Reply(text=text, routed_model=receipt["routed_model"], receipt_id=receipt["receipt_id"], **usage)
