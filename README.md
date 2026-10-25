@@ -25,7 +25,8 @@ Rejection reasons go back to the model for another attempt.
 | Playbook mode (code runs the verified queries, the model explains) | Covered by unit tests with a scripted model, plus a live check that the fact values match direct openFDA calls (281, 482, +201, DSY 53, DQO 49, OEZ 29, top-3 sum 131, share 65.2%) |
 | Memory (H-MEM engine) | Covered by unit tests, the engine's conformance suite and a two-process recall test against the real engine |
 | Model access through Meterless Nightshift | Verified with live calls and saved receipts (`docs/nemotron-evidence.md`) |
-| End-to-end run of `python -m agent.main` | Not yet recorded: earlier live runs hit provider timeouts |
+| End-to-end run, playbook mode (`--playbook`) | Run twice with memory. Run 1: 22 claims verified in one round (1 model call), nothing recalled, 22 claims stored (receipt `rcpt_req_4eyajant`). Run 2: 4 hints recalled from run 1 and listed, 25 claims verified in one round (receipts `rcpt_req_vvdfl9va`, `rcpt_req_w9u17fet`) |
+| End-to-end run, exploratory mode (default) | Not completed yet: earlier live runs hit provider timeouts and 502 errors |
 
 <!-- Update the last row once a full run has been recorded. -->
 
