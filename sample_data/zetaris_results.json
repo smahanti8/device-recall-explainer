@@ -1,0 +1,208 @@
+{
+  "recorded_at": "2026-10-25T06:26:52Z",
+  "source": "real run",
+  "queries": {
+    "SELECT c.product_code AS code, c.device_name AS device, COALESCE(b.recall_count,0) - COALESCE(a.recall_count,0) AS change FROM openfda.classification_cardiovascular_table c LEFT JOIN openfda.recall_by_product_2023_table a ON a.product_code = c.product_code LEFT JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code ORDER BY change DESC LIMIT 5": [
+      {
+        "code": "DSY",
+        "device": "Prosthesis, Vascular Graft, Of 6mm And Greater Diameter",
+        "change": "53"
+      },
+      {
+        "code": "DQO",
+        "device": "Catheter, Intravascular, Diagnostic",
+        "change": "49"
+      },
+      {
+        "code": "OEZ",
+        "device": "Cardiovascular Procedure Kit",
+        "change": "29"
+      },
+      {
+        "code": "DQK",
+        "device": "Computer, Diagnostic, Programmable",
+        "change": "25"
+      },
+      {
+        "code": "DPT",
+        "device": "Probe, Blood-Flow, Extravascular",
+        "change": "22"
+      }
+    ],
+    "SELECT SUM(b.recall_count) AS total FROM openfda.classification_cardiovascular_table c JOIN openfda.recall_by_product_2023_table b ON b.product_code = c.product_code": [
+      {
+        "total": "281"
+      }
+    ],
+    "SELECT SUM(b.recall_count) AS total FROM openfda.classification_cardiovascular_table c JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code": [
+      {
+        "total": "482"
+      }
+    ],
+    "SELECT SUM(COALESCE(b.recall_count,0)) - SUM(COALESCE(a.recall_count,0)) AS diff FROM openfda.classification_cardiovascular_table c LEFT JOIN openfda.recall_by_product_2023_table a ON a.product_code = c.product_code LEFT JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code": [
+      {
+        "diff": "201"
+      }
+    ],
+    "SELECT COALESCE(b.recall_count,0) - COALESCE(a.recall_count,0) AS change FROM openfda.classification_cardiovascular_table c LEFT JOIN openfda.recall_by_product_2023_table a ON a.product_code = c.product_code LEFT JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code WHERE c.product_code = 'DSY'": [
+      {
+        "change": "53"
+      }
+    ],
+    "SELECT COALESCE(b.recall_count,0) - COALESCE(a.recall_count,0) AS change FROM openfda.classification_cardiovascular_table c LEFT JOIN openfda.recall_by_product_2023_table a ON a.product_code = c.product_code LEFT JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code WHERE c.product_code = 'DQO'": [
+      {
+        "change": "49"
+      }
+    ],
+    "SELECT COALESCE(b.recall_count,0) - COALESCE(a.recall_count,0) AS change FROM openfda.classification_cardiovascular_table c LEFT JOIN openfda.recall_by_product_2023_table a ON a.product_code = c.product_code LEFT JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code WHERE c.product_code = 'OEZ'": [
+      {
+        "change": "29"
+      }
+    ],
+    "SELECT COALESCE(b.recall_count,0) - COALESCE(a.recall_count,0) AS change FROM openfda.classification_cardiovascular_table c LEFT JOIN openfda.recall_by_product_2023_table a ON a.product_code = c.product_code LEFT JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code WHERE c.product_code = 'DQK'": [
+      {
+        "change": "25"
+      }
+    ],
+    "SELECT COALESCE(b.recall_count,0) - COALESCE(a.recall_count,0) AS change FROM openfda.classification_cardiovascular_table c LEFT JOIN openfda.recall_by_product_2023_table a ON a.product_code = c.product_code LEFT JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code WHERE c.product_code = 'DPT'": [
+      {
+        "change": "22"
+      }
+    ],
+    "SELECT SUM(change) AS top3 FROM (SELECT change FROM (SELECT c.product_code AS code, COALESCE(b.recall_count,0) - COALESCE(a.recall_count,0) AS change FROM openfda.classification_cardiovascular_table c LEFT JOIN openfda.recall_by_product_2023_table a ON a.product_code = c.product_code LEFT JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code) t ORDER BY change DESC LIMIT 3) u": [
+      {
+        "top3": "131"
+      }
+    ],
+    "SELECT ROUND(100.0 * SUM(CASE WHEN rn <= 3 THEN change ELSE 0 END) / SUM(change), 1) AS pct FROM (SELECT change, ROW_NUMBER() OVER (ORDER BY change DESC) AS rn FROM (SELECT c.product_code AS code, COALESCE(b.recall_count,0) - COALESCE(a.recall_count,0) AS change FROM openfda.classification_cardiovascular_table c LEFT JOIN openfda.recall_by_product_2023_table a ON a.product_code = c.product_code LEFT JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code) t) u": [
+      {
+        "pct": "65.2"
+      }
+    ],
+    "SELECT COUNT(*) AS n FROM openfda.recall_dsy_2024_table": [
+      {
+        "n": "54"
+      }
+    ],
+    "SELECT COUNT(DISTINCT res_event_number) AS n FROM openfda.recall_dsy_2024_table": [
+      {
+        "n": "1"
+      }
+    ],
+    "SELECT COUNT(DISTINCT recalling_firm) AS n FROM openfda.recall_dsy_2024_table": [
+      {
+        "n": "1"
+      }
+    ],
+    "SELECT root_cause_description AS top FROM openfda.recall_dsy_2024_table GROUP BY root_cause_description ORDER BY COUNT(*) DESC LIMIT 1": [
+      {
+        "top": "Equipment maintenance"
+      }
+    ],
+    "SELECT recalling_firm AS top FROM openfda.recall_dsy_2024_table GROUP BY recalling_firm ORDER BY COUNT(*) DESC LIMIT 1": [
+      {
+        "top": "Atrium Medical Corporation"
+      }
+    ],
+    "SELECT COUNT(*) AS n FROM openfda.recall_dqo_2024_table": [
+      {
+        "n": "51"
+      }
+    ],
+    "SELECT COUNT(DISTINCT res_event_number) AS n FROM openfda.recall_dqo_2024_table": [
+      {
+        "n": "3"
+      }
+    ],
+    "SELECT COUNT(DISTINCT recalling_firm) AS n FROM openfda.recall_dqo_2024_table": [
+      {
+        "n": "3"
+      }
+    ],
+    "SELECT root_cause_description AS top FROM openfda.recall_dqo_2024_table GROUP BY root_cause_description ORDER BY COUNT(*) DESC LIMIT 1": [
+      {
+        "top": "Under Investigation by firm"
+      }
+    ],
+    "SELECT recalling_firm AS top FROM openfda.recall_dqo_2024_table GROUP BY recalling_firm ORDER BY COUNT(*) DESC LIMIT 1": [
+      {
+        "top": "Boston Scientific Corporation"
+      }
+    ],
+    "SELECT COUNT(*) AS n FROM openfda.recall_oez_2024_table": [
+      {
+        "n": "43"
+      }
+    ],
+    "SELECT COUNT(DISTINCT res_event_number) AS n FROM openfda.recall_oez_2024_table": [
+      {
+        "n": "21"
+      }
+    ],
+    "SELECT COUNT(DISTINCT recalling_firm) AS n FROM openfda.recall_oez_2024_table": [
+      {
+        "n": "6"
+      }
+    ],
+    "SELECT root_cause_description AS top FROM openfda.recall_oez_2024_table GROUP BY root_cause_description ORDER BY COUNT(*) DESC LIMIT 1": [
+      {
+        "top": "Process control"
+      }
+    ],
+    "SELECT recalling_firm AS top FROM openfda.recall_oez_2024_table GROUP BY recalling_firm ORDER BY COUNT(*) DESC LIMIT 1": [
+      {
+        "top": "MEDLINE INDUSTRIES, LP - Northfield"
+      }
+    ],
+    "SELECT COUNT(*) AS n FROM openfda.recall_dqk_2024_table": [
+      {
+        "n": "29"
+      }
+    ],
+    "SELECT COUNT(DISTINCT res_event_number) AS n FROM openfda.recall_dqk_2024_table": [
+      {
+        "n": "4"
+      }
+    ],
+    "SELECT COUNT(DISTINCT recalling_firm) AS n FROM openfda.recall_dqk_2024_table": [
+      {
+        "n": "4"
+      }
+    ],
+    "SELECT root_cause_description AS top FROM openfda.recall_dqk_2024_table GROUP BY root_cause_description ORDER BY COUNT(*) DESC LIMIT 1": [
+      {
+        "top": "Under Investigation by firm"
+      }
+    ],
+    "SELECT recalling_firm AS top FROM openfda.recall_dqk_2024_table GROUP BY recalling_firm ORDER BY COUNT(*) DESC LIMIT 1": [
+      {
+        "top": "Boston Scientific Corporation"
+      }
+    ],
+    "SELECT COUNT(*) AS n FROM openfda.recall_dpt_2024_table": [
+      {
+        "n": "22"
+      }
+    ],
+    "SELECT COUNT(DISTINCT res_event_number) AS n FROM openfda.recall_dpt_2024_table": [
+      {
+        "n": "1"
+      }
+    ],
+    "SELECT COUNT(DISTINCT recalling_firm) AS n FROM openfda.recall_dpt_2024_table": [
+      {
+        "n": "1"
+      }
+    ],
+    "SELECT root_cause_description AS top FROM openfda.recall_dpt_2024_table GROUP BY root_cause_description ORDER BY COUNT(*) DESC LIMIT 1": [
+      {
+        "top": "Process control"
+      }
+    ],
+    "SELECT recalling_firm AS top FROM openfda.recall_dpt_2024_table GROUP BY recalling_firm ORDER BY COUNT(*) DESC LIMIT 1": [
+      {
+        "top": "Smiths Medical ASD, Inc."
+      }
+    ]
+  }
+}

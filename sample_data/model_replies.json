@@ -1,0 +1,1463 @@
+{
+  "recorded_at": "2026-10-25T06:26:52Z",
+  "source": "real run",
+  "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+  "replies": {
+    "20a4dd3b9e4f9694459c9a89c4e45fcac11f840b1028a07cf0b408245c190cc2": {
+      "id": "chatcmpl-38b4056b-35ab-4b38-bd3f-52514fade4ff",
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "logprobs": null,
+          "message": {
+            "content": "{\n  \"text\": \"Cardiovascular device recall records rose from 281 in 2023 to 482 in 2024, an increase of 201 records. The top three product codes \u2014 DSY, DQO, and OEZ \u2014 together added 131 records, accounting for 65.2% of the total increase. DSY contributed 53 records from 1 event, with the top root cause Equipment maintenance and the top recalling firm Atrium Medical Corporation. DQO contributed 49 records from 3 events involving 3 firms, with the top root cause Under Investigation by firm and the top recalling firm Boston Scientific Corporation. OEZ contributed 29 records from 21 events involving 6 firms, with the top root cause Process control and the top recalling firm MEDLINE INDUSTRIES, LP - Northfield. Additional increases came from DQK (25 records from 4 events involving 3 firms, top root cause Under Investigation by firm, top recalling firm Boston Scientific Corporation) and DPT (22 records from 1 event, top root cause Process control, top recalling firm Smiths Medical ASD, Inc.).\",\n  \"facts\": [\"f1\",\"f2\",\"f3\",\"f4\",\"f5\",\"f6\",\"f7\",\"f8\",\"f9\",\"f10\",\"f11\",\"f12\",\"f13\",\"f14\",\"f15\",\"f16\",\"f17\",\"f18\",\"f19\",\"f20\",\"f21\",\"f22\",\"f23\",\"f24\",\"f25\",\"f26\",\"f27\",\"f28\",\"f29\",\"f30\",\"f31\",\"f32\",\"f33\",\"f34\",\"f35\"]\n}",
+            "refusal": null,
+            "role": "assistant",
+            "annotations": null,
+            "audio": null,
+            "function_call": null,
+            "tool_calls": null
+          }
+        }
+      ],
+      "created": 1792909701,
+      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "object": "chat.completion",
+      "moderation": null,
+      "service_tier": null,
+      "system_fingerprint": null,
+      "usage": {
+        "completion_tokens": 2672,
+        "prompt_tokens": 2392,
+        "total_tokens": 5064,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "meterless": {
+        "schema": "meterless.compute_receipt.v1",
+        "receipt_id": "rcpt_req_dv9gxx4q",
+        "decision_id": "req_dv9gxx4q",
+        "requested_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "provider_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "routed_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+        "winning_route": {
+          "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+          "label": "Nemotron 3.5 Lightning 30B A3B",
+          "provider": "nvidia",
+          "kind": "cloud",
+          "tier": "A"
+        },
+        "requires_review": false,
+        "phases": [
+          {
+            "phase": "final_synthesis",
+            "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "ms": 23478,
+            "tokensIn": 2392,
+            "tokensOut": 2672,
+            "outputTps": 113.80867194820682,
+            "coherence": null,
+            "tier": "A",
+            "reflex_decided_in_ms": 0.2
+          }
+        ],
+        "usage": {
+          "input_tokens": 2392,
+          "output_tokens": 2672,
+          "total_tokens": 5064,
+          "output_tps": 113.80867194820682,
+          "latency_ms": 23478
+        },
+        "cost": {
+          "actual_usd": 0,
+          "naive_usd": 0,
+          "baseline": {
+            "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "label": "Nemotron 3.5 Lightning 30B A3B",
+            "source": "mode-default-frontier"
+          },
+          "verifier_usd": 0,
+          "race_overhead_usd": 0
+        },
+        "savings": {
+          "amount": 0,
+          "currency": "USD",
+          "vs": "Nemotron 3.5 Lightning 30B A3B",
+          "baseline_source": "mode-default-frontier"
+        },
+        "cache": {
+          "status": "miss",
+          "losers_reclaimed": 0,
+          "partials_reclaimed": 0
+        },
+        "privacy": {
+          "path": "cloud-ok",
+          "redaction": {
+            "applied": false,
+            "spans": 0
+          }
+        },
+        "from_cache": false,
+        "losers_reclaimed": 0,
+        "receipt": {
+          "app": "hackathon-agent",
+          "app_policy": {
+            "app": "hackathon-agent",
+            "cross_check": "auto",
+            "has_rule": true,
+            "lanes": null,
+            "mode_coerced": false,
+            "premium_budget": null,
+            "privacy": "cloud-ok",
+            "race_width": 6,
+            "requested_mode": "auto",
+            "routed_mode": "auto"
+          },
+          "autopilot": {
+            "ctx_dropped": [],
+            "ctx_unfilterable": false,
+            "envelope": {
+              "allocatable_mb": 0,
+              "pressure": "unknown",
+              "remaining_mb": 0,
+              "used_mb": 0
+            },
+            "needs": {
+              "coding": false,
+              "tools": false,
+              "vision": false
+            },
+            "prompt_tokens": 737,
+            "scout": {
+              "candidates": [
+                {
+                  "id": "RECALL_OPTIMIZER",
+                  "score": 6
+                },
+                {
+                  "id": "CODE",
+                  "score": 4
+                },
+                {
+                  "id": "WORKFLOW_BUILDER",
+                  "score": 4
+                }
+              ],
+              "category": "Memory",
+              "confident": false,
+              "mode": "RECALL_OPTIMIZER",
+              "ms": 0.91,
+              "score": 6,
+              "source": "detected",
+              "tier": "A"
+            },
+            "tier_hint": null,
+            "why": [
+              "scout read RECALL_OPTIMIZER (not confident \u2014 no tier opinion)",
+              "~737 prompt tokens \u2014 lanes whose slot cannot hold them are not asked"
+            ]
+          },
+          "bar": null,
+          "budget_degrade": null,
+          "cache": {
+            "losers_reclaimed": 0,
+            "partials_reclaimed": 0,
+            "status": "miss"
+          },
+          "consensus": {
+            "agree": 1,
+            "coherence": null,
+            "detail": "one model handled this \u2014 no cross-model agreement to check",
+            "label": "single route",
+            "level": "solo",
+            "raced": 1,
+            "tone": "neutral",
+            "verified": null
+          },
+          "consensus_escalation": null,
+          "cost": {
+            "actual_usd": 0,
+            "baseline": {
+              "label": "Nemotron 3.5 Lightning 30B A3B",
+              "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+              "source": "mode-default-frontier"
+            },
+            "naive_usd": 0,
+            "race_overhead_usd": 0,
+            "verifier_usd": 0
+          },
+          "created_at": 1792909701652,
+          "cross_check": {
+            "app": "hackathon-agent",
+            "blocking": false,
+            "checks": [],
+            "recommended_action": "allow",
+            "reflex_ms": 0.18,
+            "risk_level": "low",
+            "skip_reason": "tier_a_chat",
+            "status": "skipped",
+            "verifier": "none",
+            "verifier_model": null,
+            "verifier_ms": 0,
+            "verifier_ran": false,
+            "verifier_verdict": null
+          },
+          "debate": null,
+          "decision_id": "req_dv9gxx4q",
+          "deliberation": null,
+          "egress": {
+            "coverage": "pattern_floor",
+            "destination": "nvidia",
+            "never_eligible": [],
+            "sent": {
+              "context_sources": [
+                "messages",
+                "hmem:2 records"
+              ],
+              "prompt_chars": 1607,
+              "redacted": []
+            },
+            "withheld": []
+          },
+          "eligible": null,
+          "error": "",
+          "fusion": null,
+          "gen_verifier": null,
+          "graded_weight": null,
+          "hmem": {
+            "ids": [
+              "mem_mvnf7yvi_7bed",
+              "mem_mvmqni6v_7qgn"
+            ],
+            "injected": 2,
+            "reason": "retrieved 2 memories",
+            "strategy": "comprehensive",
+            "top_score": 0.66
+          },
+          "host_pressure": {
+            "battery": null,
+            "pressure": {
+              "battery": {
+                "hard": 0.5,
+                "label": "nominal",
+                "score": 0.18,
+                "sensor": "battery%, charging",
+                "soft": 0.3
+              },
+              "cpu": {
+                "hard": 0.9,
+                "label": "nominal",
+                "score": 0.34,
+                "sensor": "30s load avg",
+                "soft": 0.7
+              },
+              "gpu": {
+                "hard": 0.92,
+                "label": "nominal",
+                "score": 0.38,
+                "sensor": "GPU + VRAM",
+                "soft": 0.75
+              },
+              "memory": {
+                "hard": 0.85,
+                "label": "warm",
+                "score": 0.51,
+                "sensor": "committed/swap",
+                "soft": 0.7
+              },
+              "network": {
+                "hard": 0.85,
+                "label": "nominal",
+                "score": 0.12,
+                "sensor": "RTT to providers",
+                "soft": 0.5
+              },
+              "quota": {
+                "hard": 0.95,
+                "label": "nominal",
+                "score": 0.28,
+                "sensor": "per-key window",
+                "soft": 0.8
+              },
+              "thermal": {
+                "hard": 0.8,
+                "label": "nominal",
+                "score": 0.22,
+                "sensor": "thermal API",
+                "soft": 0.55
+              }
+            },
+            "thermal": "nominal"
+          },
+          "job": null,
+          "mcp": null,
+          "method": null,
+          "mode": "auto",
+          "optimistic": null,
+          "phases": [
+            {
+              "coherence": null,
+              "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+              "ms": 23478,
+              "outputTps": 113.80867194820682,
+              "phase": "final_synthesis",
+              "reflex_decided_in_ms": 0.2,
+              "tier": "A",
+              "tokensIn": 2392,
+              "tokensOut": 2672
+            }
+          ],
+          "privacy": {
+            "path": "cloud-ok",
+            "redaction": {
+              "applied": false,
+              "spans": 0
+            }
+          },
+          "prompt_preview": "Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?\n\nFacts:\nf1: Cardiovascular recall records in 2023 = 281\nf2: Cardiovascula",
+          "quality_race": null,
+          "reasoning_scaffold": null,
+          "receipt_id": "rcpt_req_dv9gxx4q",
+          "refine": null,
+          "request_id": "chatcmpl-38b4056b-35ab-4b38-bd3f-52514fade4ff",
+          "requested_mode": "meterless/auto",
+          "routing": {
+            "confidence": null,
+            "escalated": null,
+            "escalated_on_divergence": false,
+            "hedge": null,
+            "hedges_skipped": 0,
+            "of": 1,
+            "policy": "learned-router",
+            "predicted": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "reason": "single-candidate",
+            "width": 1,
+            "winner": "nvidia/nemotron-3.5-lightning-30b-a3b"
+          },
+          "savings": {
+            "amount": 0,
+            "baseline_source": "mode-default-frontier",
+            "currency": "USD",
+            "vs": "Nemotron 3.5 Lightning 30B A3B"
+          },
+          "schema": "meterless.compute_receipt.v1",
+          "score": null,
+          "scorecard": null,
+          "status": "ok",
+          "summary": "ok \u00b7 Nemotron 3.5 Lightning 30B A3B \u00b7 miss \u00b7 $0.0000 saved",
+          "synthesis": null,
+          "test_time_compute": null,
+          "tool_degraded": null,
+          "unmet": null,
+          "usage": {
+            "input_tokens": 2392,
+            "latency_ms": 23478,
+            "output_tokens": 2672,
+            "output_tps": 113.80867194820682,
+            "total_tokens": 5064
+          },
+          "verdict": null,
+          "verification": null,
+          "winning_route": {
+            "kind": "cloud",
+            "label": "Nemotron 3.5 Lightning 30B A3B",
+            "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "provider": "nvidia",
+            "tier": "A"
+          }
+        },
+        "receipt_envelope": {
+          "body": {
+            "llama_cpp_ref": "08659901c43b51de735740f1cf61bb82fbe0c4e4",
+            "manifest_hash": "347c4ebfb32576be51ffc98afd8dfd0bf1b981351207ba10cd41a41add9fd505",
+            "receipt": {
+              "app": "hackathon-agent",
+              "app_policy": {
+                "app": "hackathon-agent",
+                "cross_check": "auto",
+                "has_rule": true,
+                "lanes": null,
+                "mode_coerced": false,
+                "premium_budget": null,
+                "privacy": "cloud-ok",
+                "race_width": 6,
+                "requested_mode": "auto",
+                "routed_mode": "auto"
+              },
+              "autopilot": {
+                "ctx_dropped": [],
+                "ctx_unfilterable": false,
+                "envelope": {
+                  "allocatable_mb": 0,
+                  "pressure": "unknown",
+                  "remaining_mb": 0,
+                  "used_mb": 0
+                },
+                "needs": {
+                  "coding": false,
+                  "tools": false,
+                  "vision": false
+                },
+                "prompt_tokens": 737,
+                "scout": {
+                  "candidates": [
+                    {
+                      "id": "RECALL_OPTIMIZER",
+                      "score": 6
+                    },
+                    {
+                      "id": "CODE",
+                      "score": 4
+                    },
+                    {
+                      "id": "WORKFLOW_BUILDER",
+                      "score": 4
+                    }
+                  ],
+                  "category": "Memory",
+                  "confident": false,
+                  "mode": "RECALL_OPTIMIZER",
+                  "ms": 0.91,
+                  "score": 6,
+                  "source": "detected",
+                  "tier": "A"
+                },
+                "tier_hint": null,
+                "why": [
+                  "scout read RECALL_OPTIMIZER (not confident \u2014 no tier opinion)",
+                  "~737 prompt tokens \u2014 lanes whose slot cannot hold them are not asked"
+                ]
+              },
+              "bar": null,
+              "budget_degrade": null,
+              "cache": {
+                "losers_reclaimed": 0,
+                "partials_reclaimed": 0,
+                "status": "miss"
+              },
+              "consensus": {
+                "agree": 1,
+                "coherence": null,
+                "detail": "one model handled this \u2014 no cross-model agreement to check",
+                "label": "single route",
+                "level": "solo",
+                "raced": 1,
+                "tone": "neutral",
+                "verified": null
+              },
+              "consensus_escalation": null,
+              "cost": {
+                "actual_usd": 0,
+                "baseline": {
+                  "label": "Nemotron 3.5 Lightning 30B A3B",
+                  "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+                  "source": "mode-default-frontier"
+                },
+                "naive_usd": 0,
+                "race_overhead_usd": 0,
+                "verifier_usd": 0
+              },
+              "created_at": 1792909701652,
+              "cross_check": {
+                "app": "hackathon-agent",
+                "blocking": false,
+                "checks": [],
+                "recommended_action": "allow",
+                "reflex_ms": 0.18,
+                "risk_level": "low",
+                "skip_reason": "tier_a_chat",
+                "status": "skipped",
+                "verifier": "none",
+                "verifier_model": null,
+                "verifier_ms": 0,
+                "verifier_ran": false,
+                "verifier_verdict": null
+              },
+              "debate": null,
+              "decision_id": "req_dv9gxx4q",
+              "deliberation": null,
+              "egress": {
+                "coverage": "pattern_floor",
+                "destination": "nvidia",
+                "never_eligible": [],
+                "sent": {
+                  "context_sources": [
+                    "messages",
+                    "hmem:2 records"
+                  ],
+                  "prompt_chars": 1607,
+                  "redacted": []
+                },
+                "withheld": []
+              },
+              "eligible": null,
+              "error": "",
+              "fusion": null,
+              "gen_verifier": null,
+              "graded_weight": null,
+              "hmem": {
+                "ids": [
+                  "mem_mvnf7yvi_7bed",
+                  "mem_mvmqni6v_7qgn"
+                ],
+                "injected": 2,
+                "reason": "retrieved 2 memories",
+                "strategy": "comprehensive",
+                "top_score": 0.66
+              },
+              "host_pressure": {
+                "battery": null,
+                "pressure": {
+                  "battery": {
+                    "hard": 0.5,
+                    "label": "nominal",
+                    "score": 0.18,
+                    "sensor": "battery%, charging",
+                    "soft": 0.3
+                  },
+                  "cpu": {
+                    "hard": 0.9,
+                    "label": "nominal",
+                    "score": 0.34,
+                    "sensor": "30s load avg",
+                    "soft": 0.7
+                  },
+                  "gpu": {
+                    "hard": 0.92,
+                    "label": "nominal",
+                    "score": 0.38,
+                    "sensor": "GPU + VRAM",
+                    "soft": 0.75
+                  },
+                  "memory": {
+                    "hard": 0.85,
+                    "label": "warm",
+                    "score": 0.51,
+                    "sensor": "committed/swap",
+                    "soft": 0.7
+                  },
+                  "network": {
+                    "hard": 0.85,
+                    "label": "nominal",
+                    "score": 0.12,
+                    "sensor": "RTT to providers",
+                    "soft": 0.5
+                  },
+                  "quota": {
+                    "hard": 0.95,
+                    "label": "nominal",
+                    "score": 0.28,
+                    "sensor": "per-key window",
+                    "soft": 0.8
+                  },
+                  "thermal": {
+                    "hard": 0.8,
+                    "label": "nominal",
+                    "score": 0.22,
+                    "sensor": "thermal API",
+                    "soft": 0.55
+                  }
+                },
+                "thermal": "nominal"
+              },
+              "job": null,
+              "mcp": null,
+              "method": null,
+              "mode": "auto",
+              "optimistic": null,
+              "phases": [
+                {
+                  "coherence": null,
+                  "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+                  "ms": 23478,
+                  "outputTps": 113.80867194820682,
+                  "phase": "final_synthesis",
+                  "reflex_decided_in_ms": 0.2,
+                  "tier": "A",
+                  "tokensIn": 2392,
+                  "tokensOut": 2672
+                }
+              ],
+              "privacy": {
+                "path": "cloud-ok",
+                "redaction": {
+                  "applied": false,
+                  "spans": 0
+                }
+              },
+              "prompt_preview": "Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?\n\nFacts:\nf1: Cardiovascular recall records in 2023 = 281\nf2: Cardiovascula",
+              "quality_race": null,
+              "reasoning_scaffold": null,
+              "receipt_id": "rcpt_req_dv9gxx4q",
+              "refine": null,
+              "request_id": "chatcmpl-38b4056b-35ab-4b38-bd3f-52514fade4ff",
+              "requested_mode": "meterless/auto",
+              "routing": {
+                "confidence": null,
+                "escalated": null,
+                "escalated_on_divergence": false,
+                "hedge": null,
+                "hedges_skipped": 0,
+                "of": 1,
+                "policy": "learned-router",
+                "predicted": "nvidia/nemotron-3.5-lightning-30b-a3b",
+                "reason": "single-candidate",
+                "width": 1,
+                "winner": "nvidia/nemotron-3.5-lightning-30b-a3b"
+              },
+              "savings": {
+                "amount": 0,
+                "baseline_source": "mode-default-frontier",
+                "currency": "USD",
+                "vs": "Nemotron 3.5 Lightning 30B A3B"
+              },
+              "schema": "meterless.compute_receipt.v1",
+              "score": null,
+              "scorecard": null,
+              "status": "ok",
+              "summary": "ok \u00b7 Nemotron 3.5 Lightning 30B A3B \u00b7 miss \u00b7 $0.0000 saved",
+              "synthesis": null,
+              "test_time_compute": null,
+              "tool_degraded": null,
+              "unmet": null,
+              "usage": {
+                "input_tokens": 2392,
+                "latency_ms": 23478,
+                "output_tokens": 2672,
+                "output_tps": 113.80867194820682,
+                "total_tokens": 5064
+              },
+              "verdict": null,
+              "verification": null,
+              "winning_route": {
+                "kind": "cloud",
+                "label": "Nemotron 3.5 Lightning 30B A3B",
+                "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+                "provider": "nvidia",
+                "tier": "A"
+              }
+            },
+            "signer": "meterlessd",
+            "ts_ms": 1792909701653
+          },
+          "pubkey_b64": "2rOvnw+8xoa7KkSV/okZ+m2UFADqAP5YmyCA9wTALq0=",
+          "sig_b64": "Dauvymq0EWNxJRrqLdnAO97xV8Vh/tQqQSivP9/BP2GWa0jJS2qNaii269dxF0suXRnDKmUpeRw42yvqUxFqAg=="
+        },
+        "mcp": null,
+        "job": {
+          "id": "job_mvmp2lmz03",
+          "kind": "app_stream",
+          "lane": "auto",
+          "turn": 259,
+          "cluster": 5
+        },
+        "egress": {
+          "destination": "nvidia",
+          "coverage": "pattern_floor",
+          "sent": {
+            "prompt_chars": 1607,
+            "context_sources": [
+              "messages",
+              "hmem:2 records"
+            ],
+            "redacted": []
+          },
+          "withheld": [],
+          "never_eligible": []
+        },
+        "consensus": {
+          "level": "solo",
+          "raced": 1,
+          "agreed": null,
+          "coherence": null,
+          "label": "single route",
+          "basis": "lexical"
+        },
+        "lineage": {
+          "families": [
+            "unknown"
+          ],
+          "distinct": 1,
+          "note": "1 distinct lineages across 1 panelists"
+        },
+        "app": "hackathon-agent",
+        "mode": "auto",
+        "scope": "user"
+      },
+      "meterless_cross_check": {
+        "status": "skipped",
+        "risk_level": "low",
+        "verifier": "none",
+        "reflex_ms": 0.18,
+        "verifier_ms": 0,
+        "verifier_ran": false,
+        "verifier_model": null,
+        "verifier_verdict": null,
+        "checks": [],
+        "recommended_action": "allow",
+        "blocking": false,
+        "app": "hackathon-agent",
+        "skip_reason": "tier_a_chat"
+      }
+    },
+    "25884477429184c1e698f15e971b72b1c57065690d6fdd9b3bfa39409c707a99": {
+      "id": "chatcmpl-02c03476-f7f6-47e3-b39c-5e92e25738f6",
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "logprobs": null,
+          "message": {
+            "content": "We need to produce a short explanation answering why recall records rose and which product codes drove it. Must include details for each product code mentioned: DSY, DQO, OEZ, DQK, DPT. Must give records, events, top root cause, top recalling firm for each. Must ensure numbers match facts. Must list facts used in \"facts\" array. Must not include fact IDs in text. Must write percentages with one decimal as shown (65.2). Must use \"records\" and \"events\" exactly as facts. For each product code, state how many records came from how many events, top root cause, top recalling firm. For codes with events=1, say \"came from a single event\". For others, give both numbers and not use words like many/few.\n\nWe need to include overall increase: 2023=281, 2024=482, increase=201. Top 3 product codes combined increase=131, share=65.2%. Top 3 likely DSY, DQO, OEZ (largest increases). We'll mention them as top three. Also mention DQK and DPT contributed additional increases.\n\nWe must include all facts referenced in text. Let's craft text.\n\nPotential text:\n\n\"Cardiovascular device recall records rose from 281 in 2023 to 482 in 2024, an increase of 201 records. The three product codes with the largest increases \u2014 DSY, DQO, and OEZ \u2014 together added 131 records, accounting for 65.2% of the total rise. DSY contributed 53 records from a single event, with the top root cause Equipment maintenance and the top recalling firm Atrium Medical Corporation. DQO contributed 49 records from 3 events involving 3 firms, with the top root cause Under Investigation by firm and the top recalling firm Boston Scientific Corporation. OEZ contributed 29 records from 21 events involving 6 firms, with the top root cause Process control and the top recalling firm MEDLINE INDUSTRIES, LP - Northfield. Additional increases came from DQK, which added 25 records from 4 events involving 4 firms, with the top root cause Under Investigation by firm and the top recalling firm Boston Scientific Corporation, and DPT, which added 22 records from a single event, with the top root cause Process control and the top recalling firm Smiths Medical ASD, Inc.\"\n\nCheck numbers: DSY increase 53 (f4). DSY records 2024 54 (f11) but we say contributed 53 records (increase). That's okay. DSY events 1 (f12). DSY firms 1 (f13). Root cause Equipment maintenance (f14). Firm Atrium Medical Corporation (f15). DQO increase 49 (f5). DQO records 2024 51 (f16) but increase 49. Events 3 (f17). Firms 3 (f18). Root cause Under Investigation by firm (f19). Firm Boston Scientific Corporation (f20). OEZ increase 29 (f6). OEZ records 2024 43 (f21). Events 21 (f22). Firms 6 (f23). Root cause Process control (f24). Firm MEDLINE INDUSTRIES, LP - Northfield (f25). DQK increase 25 (f7). DQK records 2024 29 (f26). Events 4 (f27). Firms 4 (f28). Root cause Under Investigation by firm (f29). Firm Boston Scientific Corporation (f30). DPT increase 22 (f8). DPT records 2024 22 (f31). Events 1 (f32). Firms 1 (f33). Root cause Process control (f34). Firm Smiths Medical ASD, Inc. (f35). Overall records 2023 (f1), 2024 (f2), increase (f3). Top3 increase (f9) and share (f10). Good.\n\nNow list facts used: f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14,f15,f16,f17,f18,f19,f20,f21,f22,f23,f24,f25,f26,f27,f28,f29,f30,f31,f32,f33,f34,f35. That's all 35 facts. But we must only list those whose numbers we state. We state many numbers. We state overall 281, 482, 201 (f1,f2,f3). Top3 increase 131 (f9), share 65.2 (f10). For each product code we state increase (f4-f8), records 2024 (f11,f16,f21,f26,f31), events (f12,f17,f22,f27,f32), firms (f13,f18,f23,f28,f33), root cause (f14,f19,f24,f29,f34), firm (f15,f20,f25,f30,f35). So all 35 facts are used. That's fine.\n\nNow produce JSON with text and facts array. Ensure no extra commentary.</think>{\n  \"text\": \"Cardiovascular device recall records rose from 281 in 2023 to 482 in 2024, an increase of 201 records. The three product codes with the largest increases \u2014 DSY, DQO, and OEZ \u2014 together added 131 records, accounting for 65.2% of the total rise. DSY contributed 53 records from a single event, with the top root cause Equipment maintenance and the top recalling firm Atrium Medical Corporation. DQO contributed 49 records from 3 events involving 3 firms, with the top root cause Under Investigation by firm and the top recalling firm Boston Scientific Corporation. OEZ contributed 29 records from 21 events involving 6 firms, with the top root cause Process control and the top recalling firm MEDLINE INDUSTRIES, LP - Northfield. Additional increases came from DQK, which added 25 records from 4 events involving 4 firms, with the top root cause Under Investigation by firm and the top recalling firm Boston Scientific Corporation, and DPT, which added 22 records from a single event, with the top root cause Process control and the top recalling firm Smiths Medical ASD, Inc.\",\n  \"facts\": [\n    \"f1\",\n    \"f2\",\n    \"f3\",\n    \"f4\",\n    \"f5\",\n    \"f6\",\n    \"f7\",\n    \"f8\",\n    \"f9\",\n    \"f10\",\n    \"f11\",\n    \"f12\",\n    \"f13\",\n    \"f14\",\n    \"f15\",\n    \"f16\",\n    \"f17\",\n    \"f18\",\n    \"f19\",\n    \"f20\",\n    \"f21\",\n    \"f22\",\n    \"f23\",\n    \"f24\",\n    \"f25\",\n    \"f26\",\n    \"f27\",\n    \"f28\",\n    \"f29\",\n    \"f30\",\n    \"f31\",\n    \"f32\",\n    \"f33\",\n    \"f34\",\n    \"f35\"\n  ]\n}",
+            "refusal": null,
+            "role": "assistant",
+            "annotations": null,
+            "audio": null,
+            "function_call": null,
+            "tool_calls": null
+          }
+        }
+      ],
+      "created": 1792909726,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "object": "chat.completion",
+      "moderation": null,
+      "service_tier": null,
+      "system_fingerprint": null,
+      "usage": {
+        "completion_tokens": 1730,
+        "prompt_tokens": 2686,
+        "total_tokens": 4416,
+        "completion_tokens_details": null,
+        "prompt_tokens_details": null
+      },
+      "meterless": {
+        "schema": "meterless.compute_receipt.v1",
+        "receipt_id": "rcpt_req_63urdzfk",
+        "decision_id": "req_63urdzfk",
+        "requested_model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "provider_model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "routed_model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "winning_route": {
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "label": "Nemotron 3 Ultra 550B A55B",
+          "provider": "nvidia",
+          "kind": "cloud",
+          "tier": "C"
+        },
+        "requires_review": false,
+        "phases": [
+          {
+            "phase": "final_synthesis",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "ms": 17081,
+            "tokensIn": 2686,
+            "tokensOut": 1730,
+            "outputTps": 101.28212633920731,
+            "coherence": null,
+            "tier": "C",
+            "reflex_decided_in_ms": 0.2
+          }
+        ],
+        "usage": {
+          "input_tokens": 2686,
+          "output_tokens": 1730,
+          "total_tokens": 4416,
+          "output_tps": 101.28212633920731,
+          "latency_ms": 17081
+        },
+        "cost": {
+          "actual_usd": 0,
+          "naive_usd": 0,
+          "baseline": {
+            "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "label": "Nemotron 3.5 Lightning 30B A3B",
+            "source": "mode-default-frontier"
+          },
+          "verifier_usd": 0,
+          "race_overhead_usd": 0
+        },
+        "savings": {
+          "amount": 0,
+          "currency": "USD",
+          "vs": "Nemotron 3.5 Lightning 30B A3B",
+          "baseline_source": "mode-default-frontier"
+        },
+        "cache": {
+          "status": "miss",
+          "losers_reclaimed": 0,
+          "partials_reclaimed": 0
+        },
+        "privacy": {
+          "path": "cloud-ok",
+          "redaction": {
+            "applied": false,
+            "spans": 0
+          }
+        },
+        "from_cache": false,
+        "losers_reclaimed": 0,
+        "receipt": {
+          "app": "hackathon-agent",
+          "app_policy": {
+            "app": "hackathon-agent",
+            "cross_check": "auto",
+            "has_rule": true,
+            "lanes": null,
+            "mode_coerced": false,
+            "premium_budget": null,
+            "privacy": "cloud-ok",
+            "race_width": 6,
+            "requested_mode": "auto",
+            "routed_mode": "auto"
+          },
+          "autopilot": {
+            "ctx_dropped": [],
+            "ctx_unfilterable": false,
+            "envelope": {
+              "allocatable_mb": 0,
+              "pressure": "unknown",
+              "remaining_mb": 0,
+              "used_mb": 0
+            },
+            "needs": {
+              "coding": false,
+              "tools": false,
+              "vision": false
+            },
+            "prompt_tokens": 940,
+            "scout": {
+              "candidates": [
+                {
+                  "id": "RECALL_OPTIMIZER",
+                  "score": 6
+                },
+                {
+                  "id": "WRITER",
+                  "score": 5
+                },
+                {
+                  "id": "CODE",
+                  "score": 4
+                }
+              ],
+              "category": "Memory",
+              "confident": false,
+              "mode": "RECALL_OPTIMIZER",
+              "ms": 1.05,
+              "score": 6,
+              "source": "detected",
+              "tier": "A"
+            },
+            "tier_hint": null,
+            "why": [
+              "scout read RECALL_OPTIMIZER (not confident \u2014 no tier opinion)",
+              "~940 prompt tokens \u2014 lanes whose slot cannot hold them are not asked"
+            ]
+          },
+          "bar": null,
+          "budget_degrade": null,
+          "cache": {
+            "losers_reclaimed": 0,
+            "partials_reclaimed": 0,
+            "status": "miss"
+          },
+          "consensus": {
+            "agree": 1,
+            "coherence": null,
+            "detail": "answered by a top-tier model",
+            "label": "frontier answer",
+            "level": "solo",
+            "raced": 1,
+            "tone": "blue",
+            "verified": null
+          },
+          "consensus_escalation": null,
+          "cost": {
+            "actual_usd": 0,
+            "baseline": {
+              "label": "Nemotron 3.5 Lightning 30B A3B",
+              "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+              "source": "mode-default-frontier"
+            },
+            "naive_usd": 0,
+            "race_overhead_usd": 0,
+            "verifier_usd": 0
+          },
+          "created_at": 1792909726679,
+          "cross_check": {
+            "app": "hackathon-agent",
+            "blocking": false,
+            "checks": [
+              {
+                "message": "No destructive ops detected.",
+                "status": "passed",
+                "type": "destructive_action"
+              },
+              {
+                "message": "No PII/credential detected in response.",
+                "status": "passed",
+                "type": "pii_guard"
+              },
+              {
+                "message": "Not a tool call.",
+                "status": "skipped",
+                "type": "schema_validity"
+              }
+            ],
+            "destructive": false,
+            "raw_risk": "low",
+            "recommended_action": "allow",
+            "reflex_ms": 0.22,
+            "requires_review": false,
+            "risk_level": "low",
+            "status": "passed",
+            "verifier": "deterministic/schema+regex",
+            "verifier_error": null,
+            "verifier_model": null,
+            "verifier_ms": 0,
+            "verifier_ran": false,
+            "verifier_tokens": null,
+            "verifier_verdict": null
+          },
+          "debate": null,
+          "decision_id": "req_63urdzfk",
+          "deliberation": null,
+          "egress": {
+            "coverage": "pattern_floor",
+            "destination": "nvidia",
+            "never_eligible": [],
+            "sent": {
+              "context_sources": [
+                "messages",
+                "hmem:2 records"
+              ],
+              "prompt_chars": 2419,
+              "redacted": []
+            },
+            "withheld": []
+          },
+          "eligible": null,
+          "error": "",
+          "fusion": null,
+          "gen_verifier": null,
+          "graded_weight": null,
+          "hmem": {
+            "ids": [
+              "mem_mvnf7yvi_7bed",
+              "mem_mvmqni6v_7qgn"
+            ],
+            "injected": 2,
+            "reason": "retrieved 2 memories",
+            "strategy": "comprehensive",
+            "top_score": 0.796
+          },
+          "host_pressure": {
+            "battery": null,
+            "pressure": {
+              "battery": {
+                "hard": 0.5,
+                "label": "nominal",
+                "score": 0.18,
+                "sensor": "battery%, charging",
+                "soft": 0.3
+              },
+              "cpu": {
+                "hard": 0.9,
+                "label": "nominal",
+                "score": 0.34,
+                "sensor": "30s load avg",
+                "soft": 0.7
+              },
+              "gpu": {
+                "hard": 0.92,
+                "label": "nominal",
+                "score": 0.38,
+                "sensor": "GPU + VRAM",
+                "soft": 0.75
+              },
+              "memory": {
+                "hard": 0.85,
+                "label": "warm",
+                "score": 0.51,
+                "sensor": "committed/swap",
+                "soft": 0.7
+              },
+              "network": {
+                "hard": 0.85,
+                "label": "nominal",
+                "score": 0.12,
+                "sensor": "RTT to providers",
+                "soft": 0.5
+              },
+              "quota": {
+                "hard": 0.95,
+                "label": "nominal",
+                "score": 0.28,
+                "sensor": "per-key window",
+                "soft": 0.8
+              },
+              "thermal": {
+                "hard": 0.8,
+                "label": "nominal",
+                "score": 0.22,
+                "sensor": "thermal API",
+                "soft": 0.55
+              }
+            },
+            "thermal": "nominal"
+          },
+          "job": null,
+          "mcp": null,
+          "method": null,
+          "mode": "auto",
+          "optimistic": null,
+          "phases": [
+            {
+              "coherence": null,
+              "model": "nvidia/nemotron-3-ultra-550b-a55b",
+              "ms": 17081,
+              "outputTps": 101.28212633920732,
+              "phase": "final_synthesis",
+              "reflex_decided_in_ms": 0.2,
+              "tier": "C",
+              "tokensIn": 2686,
+              "tokensOut": 1730
+            }
+          ],
+          "privacy": {
+            "path": "cloud-ok",
+            "redaction": {
+              "applied": false,
+              "spans": 0
+            }
+          },
+          "prompt_preview": "Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?\n\nYour previous draft was rejected:\n- [missing_evidence] DQK detail: the a",
+          "quality_race": null,
+          "reasoning_scaffold": null,
+          "receipt_id": "rcpt_req_63urdzfk",
+          "refine": null,
+          "request_id": "chatcmpl-02c03476-f7f6-47e3-b39c-5e92e25738f6",
+          "requested_mode": "meterless/auto",
+          "routing": {
+            "confidence": null,
+            "escalated": null,
+            "escalated_on_divergence": false,
+            "hedge": null,
+            "hedges_skipped": 0,
+            "of": 1,
+            "policy": "learned-router",
+            "predicted": "nvidia/nemotron-3.5-lightning-30b-a3b",
+            "reason": "single-candidate",
+            "width": 1,
+            "winner": "nvidia/nemotron-3-ultra-550b-a55b"
+          },
+          "savings": {
+            "amount": 0,
+            "baseline_source": "mode-default-frontier",
+            "currency": "USD",
+            "vs": "Nemotron 3.5 Lightning 30B A3B"
+          },
+          "schema": "meterless.compute_receipt.v1",
+          "score": null,
+          "scorecard": null,
+          "status": "ok",
+          "summary": "ok \u00b7 Nemotron 3 Ultra 550B A55B \u00b7 miss \u00b7 $0.0000 saved",
+          "synthesis": null,
+          "test_time_compute": null,
+          "tool_degraded": null,
+          "unmet": null,
+          "usage": {
+            "input_tokens": 2686,
+            "latency_ms": 17081,
+            "output_tokens": 1730,
+            "output_tps": 101.28212633920732,
+            "total_tokens": 4416
+          },
+          "verdict": null,
+          "verification": null,
+          "winning_route": {
+            "kind": "cloud",
+            "label": "Nemotron 3 Ultra 550B A55B",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b",
+            "provider": "nvidia",
+            "tier": "C"
+          }
+        },
+        "receipt_envelope": {
+          "body": {
+            "llama_cpp_ref": "08659901c43b51de735740f1cf61bb82fbe0c4e4",
+            "manifest_hash": "347c4ebfb32576be51ffc98afd8dfd0bf1b981351207ba10cd41a41add9fd505",
+            "receipt": {
+              "app": "hackathon-agent",
+              "app_policy": {
+                "app": "hackathon-agent",
+                "cross_check": "auto",
+                "has_rule": true,
+                "lanes": null,
+                "mode_coerced": false,
+                "premium_budget": null,
+                "privacy": "cloud-ok",
+                "race_width": 6,
+                "requested_mode": "auto",
+                "routed_mode": "auto"
+              },
+              "autopilot": {
+                "ctx_dropped": [],
+                "ctx_unfilterable": false,
+                "envelope": {
+                  "allocatable_mb": 0,
+                  "pressure": "unknown",
+                  "remaining_mb": 0,
+                  "used_mb": 0
+                },
+                "needs": {
+                  "coding": false,
+                  "tools": false,
+                  "vision": false
+                },
+                "prompt_tokens": 940,
+                "scout": {
+                  "candidates": [
+                    {
+                      "id": "RECALL_OPTIMIZER",
+                      "score": 6
+                    },
+                    {
+                      "id": "WRITER",
+                      "score": 5
+                    },
+                    {
+                      "id": "CODE",
+                      "score": 4
+                    }
+                  ],
+                  "category": "Memory",
+                  "confident": false,
+                  "mode": "RECALL_OPTIMIZER",
+                  "ms": 1.05,
+                  "score": 6,
+                  "source": "detected",
+                  "tier": "A"
+                },
+                "tier_hint": null,
+                "why": [
+                  "scout read RECALL_OPTIMIZER (not confident \u2014 no tier opinion)",
+                  "~940 prompt tokens \u2014 lanes whose slot cannot hold them are not asked"
+                ]
+              },
+              "bar": null,
+              "budget_degrade": null,
+              "cache": {
+                "losers_reclaimed": 0,
+                "partials_reclaimed": 0,
+                "status": "miss"
+              },
+              "consensus": {
+                "agree": 1,
+                "coherence": null,
+                "detail": "answered by a top-tier model",
+                "label": "frontier answer",
+                "level": "solo",
+                "raced": 1,
+                "tone": "blue",
+                "verified": null
+              },
+              "consensus_escalation": null,
+              "cost": {
+                "actual_usd": 0,
+                "baseline": {
+                  "label": "Nemotron 3.5 Lightning 30B A3B",
+                  "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+                  "source": "mode-default-frontier"
+                },
+                "naive_usd": 0,
+                "race_overhead_usd": 0,
+                "verifier_usd": 0
+              },
+              "created_at": 1792909726679,
+              "cross_check": {
+                "app": "hackathon-agent",
+                "blocking": false,
+                "checks": [
+                  {
+                    "message": "No destructive ops detected.",
+                    "status": "passed",
+                    "type": "destructive_action"
+                  },
+                  {
+                    "message": "No PII/credential detected in response.",
+                    "status": "passed",
+                    "type": "pii_guard"
+                  },
+                  {
+                    "message": "Not a tool call.",
+                    "status": "skipped",
+                    "type": "schema_validity"
+                  }
+                ],
+                "destructive": false,
+                "raw_risk": "low",
+                "recommended_action": "allow",
+                "reflex_ms": 0.22,
+                "requires_review": false,
+                "risk_level": "low",
+                "status": "passed",
+                "verifier": "deterministic/schema+regex",
+                "verifier_error": null,
+                "verifier_model": null,
+                "verifier_ms": 0,
+                "verifier_ran": false,
+                "verifier_tokens": null,
+                "verifier_verdict": null
+              },
+              "debate": null,
+              "decision_id": "req_63urdzfk",
+              "deliberation": null,
+              "egress": {
+                "coverage": "pattern_floor",
+                "destination": "nvidia",
+                "never_eligible": [],
+                "sent": {
+                  "context_sources": [
+                    "messages",
+                    "hmem:2 records"
+                  ],
+                  "prompt_chars": 2419,
+                  "redacted": []
+                },
+                "withheld": []
+              },
+              "eligible": null,
+              "error": "",
+              "fusion": null,
+              "gen_verifier": null,
+              "graded_weight": null,
+              "hmem": {
+                "ids": [
+                  "mem_mvnf7yvi_7bed",
+                  "mem_mvmqni6v_7qgn"
+                ],
+                "injected": 2,
+                "reason": "retrieved 2 memories",
+                "strategy": "comprehensive",
+                "top_score": 0.796
+              },
+              "host_pressure": {
+                "battery": null,
+                "pressure": {
+                  "battery": {
+                    "hard": 0.5,
+                    "label": "nominal",
+                    "score": 0.18,
+                    "sensor": "battery%, charging",
+                    "soft": 0.3
+                  },
+                  "cpu": {
+                    "hard": 0.9,
+                    "label": "nominal",
+                    "score": 0.34,
+                    "sensor": "30s load avg",
+                    "soft": 0.7
+                  },
+                  "gpu": {
+                    "hard": 0.92,
+                    "label": "nominal",
+                    "score": 0.38,
+                    "sensor": "GPU + VRAM",
+                    "soft": 0.75
+                  },
+                  "memory": {
+                    "hard": 0.85,
+                    "label": "warm",
+                    "score": 0.51,
+                    "sensor": "committed/swap",
+                    "soft": 0.7
+                  },
+                  "network": {
+                    "hard": 0.85,
+                    "label": "nominal",
+                    "score": 0.12,
+                    "sensor": "RTT to providers",
+                    "soft": 0.5
+                  },
+                  "quota": {
+                    "hard": 0.95,
+                    "label": "nominal",
+                    "score": 0.28,
+                    "sensor": "per-key window",
+                    "soft": 0.8
+                  },
+                  "thermal": {
+                    "hard": 0.8,
+                    "label": "nominal",
+                    "score": 0.22,
+                    "sensor": "thermal API",
+                    "soft": 0.55
+                  }
+                },
+                "thermal": "nominal"
+              },
+              "job": null,
+              "mcp": null,
+              "method": null,
+              "mode": "auto",
+              "optimistic": null,
+              "phases": [
+                {
+                  "coherence": null,
+                  "model": "nvidia/nemotron-3-ultra-550b-a55b",
+                  "ms": 17081,
+                  "outputTps": 101.28212633920732,
+                  "phase": "final_synthesis",
+                  "reflex_decided_in_ms": 0.2,
+                  "tier": "C",
+                  "tokensIn": 2686,
+                  "tokensOut": 1730
+                }
+              ],
+              "privacy": {
+                "path": "cloud-ok",
+                "redaction": {
+                  "applied": false,
+                  "spans": 0
+                }
+              },
+              "prompt_preview": "Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?\n\nYour previous draft was rejected:\n- [missing_evidence] DQK detail: the a",
+              "quality_race": null,
+              "reasoning_scaffold": null,
+              "receipt_id": "rcpt_req_63urdzfk",
+              "refine": null,
+              "request_id": "chatcmpl-02c03476-f7f6-47e3-b39c-5e92e25738f6",
+              "requested_mode": "meterless/auto",
+              "routing": {
+                "confidence": null,
+                "escalated": null,
+                "escalated_on_divergence": false,
+                "hedge": null,
+                "hedges_skipped": 0,
+                "of": 1,
+                "policy": "learned-router",
+                "predicted": "nvidia/nemotron-3.5-lightning-30b-a3b",
+                "reason": "single-candidate",
+                "width": 1,
+                "winner": "nvidia/nemotron-3-ultra-550b-a55b"
+              },
+              "savings": {
+                "amount": 0,
+                "baseline_source": "mode-default-frontier",
+                "currency": "USD",
+                "vs": "Nemotron 3.5 Lightning 30B A3B"
+              },
+              "schema": "meterless.compute_receipt.v1",
+              "score": null,
+              "scorecard": null,
+              "status": "ok",
+              "summary": "ok \u00b7 Nemotron 3 Ultra 550B A55B \u00b7 miss \u00b7 $0.0000 saved",
+              "synthesis": null,
+              "test_time_compute": null,
+              "tool_degraded": null,
+              "unmet": null,
+              "usage": {
+                "input_tokens": 2686,
+                "latency_ms": 17081,
+                "output_tokens": 1730,
+                "output_tps": 101.28212633920732,
+                "total_tokens": 4416
+              },
+              "verdict": null,
+              "verification": null,
+              "winning_route": {
+                "kind": "cloud",
+                "label": "Nemotron 3 Ultra 550B A55B",
+                "model": "nvidia/nemotron-3-ultra-550b-a55b",
+                "provider": "nvidia",
+                "tier": "C"
+              }
+            },
+            "signer": "meterlessd",
+            "ts_ms": 1792909726681
+          },
+          "pubkey_b64": "2rOvnw+8xoa7KkSV/okZ+m2UFADqAP5YmyCA9wTALq0=",
+          "sig_b64": "Nv0CdamthahIOrLhJf5dNQ4rS8rePyLWsyvcW9cm017DghnuvFEY+tepRoj5awu0WoUP8TYH0nbIjYCUJ3VsCw=="
+        },
+        "mcp": null,
+        "job": {
+          "id": "job_mvmp2lmz03",
+          "kind": "app_stream",
+          "lane": "auto",
+          "turn": 260,
+          "cluster": 5
+        },
+        "egress": {
+          "destination": "nvidia",
+          "coverage": "pattern_floor",
+          "sent": {
+            "prompt_chars": 2419,
+            "context_sources": [
+              "messages",
+              "hmem:2 records"
+            ],
+            "redacted": []
+          },
+          "withheld": [],
+          "never_eligible": []
+        },
+        "consensus": {
+          "level": "solo",
+          "raced": 1,
+          "agreed": null,
+          "coherence": null,
+          "label": "frontier answer",
+          "basis": "lexical"
+        },
+        "lineage": {
+          "families": [
+            "unknown"
+          ],
+          "distinct": 1,
+          "note": "1 distinct lineages across 1 panelists"
+        },
+        "app": "hackathon-agent",
+        "mode": "auto",
+        "scope": "user"
+      },
+      "meterless_cross_check": {
+        "status": "passed",
+        "risk_level": "low",
+        "raw_risk": "low",
+        "verifier": "deterministic/schema+regex",
+        "reflex_ms": 0.22,
+        "verifier_ms": 0,
+        "verifier_ran": false,
+        "verifier_model": null,
+        "verifier_verdict": null,
+        "verifier_error": null,
+        "verifier_tokens": null,
+        "checks": [
+          {
+            "type": "destructive_action",
+            "status": "passed",
+            "message": "No destructive ops detected."
+          },
+          {
+            "type": "pii_guard",
+            "status": "passed",
+            "message": "No PII/credential detected in response."
+          },
+          {
+            "type": "schema_validity",
+            "status": "skipped",
+            "message": "Not a tool call."
+          }
+        ],
+        "recommended_action": "allow",
+        "blocking": false,
+        "app": "hackathon-agent",
+        "destructive": false,
+        "requires_review": false
+      }
+    }
+  }
+}
