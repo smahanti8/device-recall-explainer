@@ -39,6 +39,7 @@ SYSTEM = """You explain US FDA cardiovascular device recall data. You are given 
 Reply with exactly one JSON object: {"text": "<short explanation>", "facts": ["f1", "f2"]} where "facts" lists every fact id whose number or name you state.
 - Every number in "text" must equal the value of a fact you list; write percentages with the one decimal shown.
 - Records are product-level entries and one recall event can have many records: say "records" or "events" exactly as the facts do.
+- For each product code that has events, root-cause and recalling-firm facts, state how many records came from how many events, the top root cause and the top recalling firm. When a code has few events behind many records, say so: the increase is concentrated in a few events.
 - Describe what the data shows; make no clinical or safety judgments.
 - If a previous draft was rejected, fix exactly what was listed and keep the rest."""
 
@@ -124,6 +125,17 @@ def _parse(text):
     return parsed if isinstance(parsed, dict) and isinstance(parsed.get("text"), str) else None
 
 
+_WHY_LABELS = ("events", "root cause")
+_WHY_PROMPT = ("Your answer cites no recall-event or root-cause fact. For each product code that has them, "
+               "state records versus events (events) and the top root cause and recalling firm, "
+               "citing those facts. Reply with the same JSON object.")
+_JSON_PROMPT = 'Reply with ONE JSON object only: {"text": "...", "facts": ["f1"]}.'
+
+
+def _has_why(items):
+    return any(label in item for item in items for label in _WHY_LABELS)
+
+
 def make_playbook_draft_fn(chat=None, run_sql=None, context_fn=None):
     chat = chat or llm.chat
     run_sql = run_sql or tools_zetaris.run_sql
@@ -134,17 +146,26 @@ def make_playbook_draft_fn(chat=None, run_sql=None, context_fn=None):
         opening = _opening(question, feedback, _context(context_fn, question))
         messages = [{"role": "system", "content": SYSTEM},
                     {"role": "user", "content": f"{opening}\n\n{_facts_block(facts)}"}]
-        for _ in range(2):  # one correction if the reply is not the JSON object
+        last, fixed_json, fixed_why = None, False, False
+        for _ in range(3):  # at most one JSON correction and one "why" correction
             try:
                 raw = chat(messages, max_tokens=MAX_TOKENS).text
             except llm.LLMError:
                 raw = chat(messages, max_tokens=MAX_TOKENS).text
             reply = _parse(raw)
-            if reply:
-                used = [by_id[i] for i in dict.fromkeys(reply.get("facts") or []) if i in by_id]
-                return Draft(reply["text"], [Claim(f.label, f.value, f.citation) for f in used])
-            messages += [{"role": "assistant", "content": raw},
-                         {"role": "user", "content": 'Reply with ONE JSON object only: {"text": "...", "facts": ["f1"]}.'}]
-        return Draft("(the model did not return the expected JSON)", [])
+            if reply is None:
+                if fixed_json:
+                    break
+                fixed_json = True
+                messages += [{"role": "assistant", "content": raw}, {"role": "user", "content": _JSON_PROMPT}]
+                continue
+            used = [by_id[i] for i in dict.fromkeys(reply.get("facts") or []) if i in by_id]
+            last = Draft(reply["text"], [Claim(f.label, f.value, f.citation) for f in used])
+            if _has_why([f.label for f in facts]) and not _has_why([f.label for f in used]) and not fixed_why:
+                fixed_why = True
+                messages += [{"role": "assistant", "content": raw}, {"role": "user", "content": _WHY_PROMPT}]
+                continue
+            return last
+        return last or Draft("(the model did not return the expected JSON)", [])
 
     return draft_fn

@@ -53,6 +53,17 @@ def fresh_run():
     return run
 
 
+def ranked_run(codes=("DSY", "DQO")):
+    """Like fresh_run, but the ranking query (the only one selecting device_name) returns these codes."""
+    def run(sql):
+        run.seen.append(sql)
+        if "device_name" in sql:
+            return [AnyColumn(code=code, device="device") for code in codes]
+        return [AnyColumn()]
+    run.seen = []
+    return run
+
+
 def scripted(*replies):
     calls, queue = [], iter(replies)
 
@@ -142,6 +153,54 @@ class PlaybookDraft(unittest.TestCase):
         result = investigate("why?", self.draft_fn(chat, run), lambda claims: evaluate(claims, run_sql=run))
         self.assertEqual(result.trace[0]["reasons"], ["unclaimed_number"])
         self.assertEqual(result.rounds, 2)
+
+
+class PlaybookWhy(unittest.TestCase):
+    """The answer must explain why, not just report totals: records vs events, root cause, firm."""
+
+    def setUp(self):
+        self.run = ranked_run()
+        facts = collect_facts(run_sql=self.run)
+        ids = {f.label: f.id for f in facts}
+        self.basic = [facts[0].id]
+        self.why = [ids["DSY recall events in 2024"], ids["DSY top root cause in 2024"]]
+
+    def draft(self, chat, run=None):
+        return make_playbook_draft_fn(chat=chat, run_sql=run or self.run)("why?", [])
+
+    def test_prompt_asks_for_records_vs_events_root_cause_and_firm(self):
+        chat = scripted(reply("ok", self.basic + self.why))
+        self.draft(chat)
+        system = chat.calls[0][0]["content"].lower()
+        for needle in ("each product code", "events", "root cause", "recalling firm", "few events"):
+            self.assertIn(needle, system)
+
+    def test_an_answer_without_the_why_facts_gets_one_correction(self):
+        chat = scripted(reply("Totals only.", self.basic), reply("With the why.", self.basic + self.why))
+        draft = self.draft(chat)
+        self.assertEqual(len(chat.calls), 2)
+        correction = chat.calls[1][-1]["content"].lower()
+        self.assertIn("events", correction)
+        self.assertIn("root cause", correction)
+        self.assertIn("DSY recall events in 2024", [c.text for c in draft.claims])
+        self.assertIn("DSY top root cause in 2024", [c.text for c in draft.claims])
+
+    def test_the_correction_is_asked_only_once(self):
+        chat = scripted(reply("a", self.basic), reply("b", self.basic), reply("c", self.basic))
+        draft = self.draft(chat)
+        self.assertEqual(len(chat.calls), 2)
+        self.assertEqual(draft.text, "b")  # the second answer is returned even if it still lacks the why
+
+    def test_no_correction_when_the_why_is_already_cited(self):
+        chat = scripted(reply("ok", self.basic + self.why))
+        self.draft(chat)
+        self.assertEqual(len(chat.calls), 1)
+
+    def test_no_correction_without_record_level_facts(self):
+        run = ranked_run(codes=("ABC",))  # no record-level view for ABC
+        chat = scripted(reply("ok", self.basic))
+        self.draft(chat, run)
+        self.assertEqual(len(chat.calls), 1)
 
 
 @unittest.skipUnless(all(os.environ.get(k) for k in ("ZETARIS_REST_URL", "ZETARIS_ORG_ID", "ZETARIS_API_KEY")),
