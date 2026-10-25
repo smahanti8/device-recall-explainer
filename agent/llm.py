@@ -23,6 +23,7 @@ log = logging.getLogger("agent.llm")
 _SLOTS = threading.BoundedSemaphore(2)
 _TRANSIENT_STATUS = {429, 500, 502, 503, 504}
 _BASE_DELAY = 3.0
+_CALL_LOG = []
 
 
 class LLMError(Exception):
@@ -72,6 +73,14 @@ def escalation_model(env=None):
     return str(value).strip() or None if value else None
 
 
+def call_log():
+    return [dict(entry) for entry in _CALL_LOG]
+
+
+def clear_call_log():
+    _CALL_LOG.clear()
+
+
 def _send(messages, max_tokens, model=None):
     if sample_mode.mode() == "replay":
         return sample_mode.replay_reply(messages)
@@ -108,11 +117,13 @@ def chat(messages, max_tokens=2000, *, send=None, sleep=time.sleep, attempts=5, 
         except TransientError as error:
             last = error
             final = attempt == attempts - 1
+            _CALL_LOG.append({"status": "failed" if final else "retry", "model": None})
             runlog.emit("ModelClient", "model_call", input_summary=summary, output_summary=str(error),
                         status="failed" if final else "retry", retry_count=attempt if final else attempt + 1)
             if not final:
                 sleep(_BASE_DELAY * 2 ** attempt)
         except LLMError as error:
+            _CALL_LOG.append({"status": "failed", "model": None})
             runlog.emit("ModelClient", "model_call", input_summary=summary, output_summary=str(error),
                         status="failed", retry_count=attempt)
             raise
@@ -127,6 +138,7 @@ def chat(messages, max_tokens=2000, *, send=None, sleep=time.sleep, attempts=5, 
              usage["cost_usd"])
     text = body["choices"][0]["message"].get("content") or ""
     status = "replayed" if sample_mode.mode() == "replay" else "success"
+    _CALL_LOG.append({"status": "failed" if not text else status, "model": receipt["routed_model"]})
     if not text:
         runlog.emit("ModelClient", "model_call", input_summary=summary, output_summary="empty reply",
                     model=receipt["routed_model"], status="failed", retry_count=attempt)
