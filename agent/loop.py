@@ -8,6 +8,7 @@ A model outage (LLMError) costs one round; other exceptions propagate.
 from dataclasses import dataclass, field
 from typing import Any, List, Optional
 
+from agent import deadline
 from agent.evaluator import Claim, Rejection, unclaimed_numbers
 from agent.llm import LLMError
 
@@ -44,6 +45,11 @@ def investigate(question, draft_fn, evaluate_fn, max_rounds=3):
     unsupported: List[Claim] = []   # what the latest round could not support
     trace: List[dict] = []
     for round_number in range(1, max_rounds + 1):
+        if round_number > 1 and deadline.expired():
+            trace.append({"round": round_number, "claims": 0, "rejected": 1, "reasons": ["time_limit"],
+                          "details": ["run time limit reached"]})
+            unsupported = [Claim("run time limit reached before an answer could be verified", None)]
+            return Result(None, unsupported, round_number - 1, trace)
         try:
             draft = draft_fn(question, feedback)
         except LLMError as error:  # an outage costs a round; any other exception is a bug

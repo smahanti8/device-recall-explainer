@@ -109,7 +109,10 @@ def chat(messages, max_tokens=2000, *, send=None, sleep=time.sleep, attempts=5, 
     last = None
     last_prompt = messages[-1]["content"][:200] if messages else ""
     summary = f"{len(messages)} message(s), max_tokens={max_tokens}; last: {last_prompt}"
+    from agent import deadline  # imported here because agent.deadline imports LLMError from this module
     for attempt in range(attempts):
+        if deadline.expired():
+            raise deadline.TimeLimitReached("run time limit reached")
         try:
             with _SLOTS:
                 body = send(messages, max_tokens) if model is None else send(messages, max_tokens, model=model)

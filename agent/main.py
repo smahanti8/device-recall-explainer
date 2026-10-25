@@ -10,7 +10,7 @@ import os
 import re
 import sys
 
-from agent import llm, observability, runlog, sample_mode
+from agent import deadline, llm, observability, runlog, sample_mode
 from agent.drafter import make_draft_fn
 from agent.evaluator import Verdict, evaluate, unclaimed_numbers
 from agent.llm import LLMError
@@ -235,16 +235,18 @@ def _ask(question, memory, *, make_draft, make_playbook, run_investigation, eval
 
 def ask(question, memory=None, *, make_draft=make_draft_fn, make_playbook=make_playbook_draft_fn,
         run_investigation=investigate, evaluate_fn=evaluate, out=print, progress=None,
-        verbose=False, playbook=False, log_dir=None, now=None, report_dir=None, run_sql=None):
+        verbose=False, playbook=False, log_dir=None, now=None, report_dir=None, run_sql=None, timeout=None):
     log = RunLog(log_dir, now=now) if log_dir else None
     if log:
         runlog.start(log)
+    deadline.start(timeout)
     try:
         return _ask(question, memory, make_draft=make_draft, make_playbook=make_playbook,
                     run_investigation=run_investigation, evaluate_fn=evaluate_fn, out=out, progress=progress,
                     verbose=verbose, playbook=playbook, log=log, report_dir=report_dir,
                     run_sql=run_sql, now=now)
     finally:
+        deadline.stop()
         if log:
             runlog.stop()
 
@@ -263,6 +265,8 @@ def parse_args(argv=None):
                         help="offline demonstration: replay recordings of a real run (also SAMPLE_MODE=true)")
     parser.add_argument("--sample-dir", default="sample_data", help="where the recordings are read from")
     parser.add_argument("--record", metavar="DIR", help="record this live run's Zetaris results and model replies")
+    parser.add_argument("--timeout", type=int, default=600, metavar="SECONDS",
+                        help="stop the run after this many seconds with no answer (default 600; 0 = no limit)")
     parser.add_argument("--playbook", action="store_true",
                         help="code runs the fixed queries and the model only explains (faster, more reliable)")
     return parser.parse_args(argv)
@@ -301,7 +305,7 @@ def main(argv=None, env=None, ask_fn=None):
         memory = None if args.no_memory else Memory(args.memory_dir)
         run = ask_fn or ask
         result = run(args.question, memory, verbose=args.verbose, playbook=args.playbook,
-                     log_dir=None if args.no_log else args.log_dir,
+                     log_dir=None if args.no_log else args.log_dir, timeout=args.timeout,
                      report_dir=args.report_dir if args.report else None)
     except SampleModeError as error:
         print(str(error), file=sys.stderr)
