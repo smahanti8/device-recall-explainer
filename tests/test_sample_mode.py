@@ -241,6 +241,48 @@ class MainFlags(SampleCase):
         self.assertIn("no recording", errors.getvalue())
 
 
+class HintsStayOutOfRecordedPrompts(SampleCase):
+    """Recorded prompts must match replayed ones, so recalled hints are shown but not sent to the model in
+    record or replay mode (a judge's memory differs from the recorder's)."""
+    HINTS = ("Previously verified in earlier sessions (hints, not evidence; cite fresh SQL for every number you state):\n"
+             "- DSY recall records in 2024: 54 (source: SELECT 1)")
+
+    def run_ask(self, start=None):
+        class Memory:
+            def context_for(self, question):
+                return HintsStayOutOfRecordedPrompts.HINTS
+
+            def learn(self, claims, rejections):
+                return []
+        seen, progress = {}, []
+
+        def make_draft(context_fn=None, **kwargs):
+            seen["context"] = context_fn("why?")
+            return lambda question, feedback: None
+        if start:
+            start()
+        ask("why?", Memory(), make_draft=make_draft, run_investigation=lambda q, d, e: GOOD,
+            evaluate_fn=lambda claims: None, out=lambda *_: None, progress=progress.append)
+        return seen["context"], progress
+
+    def test_in_replay_the_hints_are_shown_but_not_sent_to_the_model(self):
+        for name, payload in (("zetaris_results.json", {"queries": {}}), ("model_replies.json", {"replies": {}})):
+            with open(os.path.join(self.dir, name), "w") as handle:
+                json.dump(dict(payload, source="real run", recorded_at="2026-10-25T12:00:00Z"), handle)
+        context, progress = self.run_ask(lambda: sample_mode.start_replay(self.dir))
+        self.assertEqual(context, "")
+        self.assertIn("memory: recalled 1 hint", progress)
+
+    def test_in_record_mode_too(self):
+        context, progress = self.run_ask(lambda: sample_mode.start_recording(self.dir))
+        self.assertEqual(context, "")
+        self.assertIn("memory: recalled 1 hint", progress)
+
+    def test_a_normal_run_still_sends_the_hints(self):
+        context, _ = self.run_ask()
+        self.assertEqual(context, self.HINTS)
+
+
 @unittest.skipUnless(os.path.exists(os.path.join(SAMPLE_DIR, "zetaris_results.json"))
                      and os.path.exists(os.path.join(SAMPLE_DIR, "model_replies.json")),
                      "record the sample data first: python -m agent.main --playbook --record sample_data ...")

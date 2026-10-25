@@ -98,7 +98,8 @@ def _ask(question, memory, *, make_draft, make_playbook, run_investigation, eval
         count = len(state["hints"])
         progress(f"memory: recalled {count} hint{'' if count == 1 else 's'}" if count
                  else "memory: nothing recalled yet")
-        return text
+        # hints are shown but not sent in record or replay mode, so recorded prompts match replayed ones
+        return "" if sample_mode.mode() else text
 
     inner = make(context_fn=recalling if memory is not None else None, **({"on_event": progress} if playbook else {}))
 
