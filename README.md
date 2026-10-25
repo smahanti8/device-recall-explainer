@@ -80,7 +80,7 @@ Meterless Nightshift runtime. At most 2 calls run at once, provider errors are r
 
 ## Cost, token and reliability controls
 
-Design choices that keep a run small, cheap to inspect and repeatable. Each one is in code and covered by tests.
+Design choices that keep a run small, safe, cheap to inspect and repeatable. Each one is in code and covered by tests.
 
 | Choice | What it does | Where |
 |---|---|---|
@@ -90,6 +90,7 @@ Design choices that keep a run small, cheap to inspect and repeatable. Each one 
 | **Query cache** | Identical SQL within a run is fetched once and then served from memory, which saves openFDA rate-limit quota | `agent/tools_zetaris.py` |
 | **Token and cost line** | Every model call's input tokens, output tokens and the cost Nightshift reports are summed and printed as `Tokens:` | `agent/main.py`, `agent/llm.py` |
 | **Observability line** | Each run prints Zetaris queries fetched versus served from cache, calls per model, retries and failed calls. The numbers are counted from what ran | `agent/observability.py` |
+| **SQL guard** | Before any request reaches Zetaris, `run_sql` accepts one `SELECT`/`WITH` statement whose tables are all `openfda` views (or CTEs of the same statement), and refuses write keywords (`insert`, `update`, `delete`, `merge`, `create`, `alter`, `drop`, `truncate`, `grant`, `revoke`, `call`, `exec`) and the Java-calling functions `reflect` and `java_method`. In playbook mode the model never writes SQL; in exploratory mode it does. The guard protects Zetaris, not the model bill, because the model has already written the SQL by then. A question over 500 characters is refused up front | `agent/tools_zetaris.py`, `agent/main.py` |
 | **Bounded retries** | At most 2 concurrent model calls and 5 attempts per call with backoff; a failed call costs one round, not the run | `agent/llm.py`, `agent/loop.py` |
 | **Structured run log** | A JSONL event per step (agent, action, model, status, retry count, token counts), with secrets redacted | `agent/runlog.py` |
 | **HTML report** | `--report` writes one self-contained page: the answer with each number linked to its proof, rounds, queries, receipts, tokens and the observability panel | `agent/report.py` |
