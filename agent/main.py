@@ -25,6 +25,7 @@ from agent.memory import Memory
 
 REQUIRED_SETTINGS = ("ZETARIS_REST_URL", "ZETARIS_ORG_ID", "ZETARIS_API_KEY",
                      "MODEL_BASE_URL", "MODEL_API_KEY", "NEMOTRON_MODEL")
+MAX_QUESTION = 500
 _RECEIPT = re.compile(r"routed_model=(\S+) receipt_id=(\S+)")
 _LATENCY = re.compile(r"latency_ms=(\S+)")
 _TOKENS = re.compile(r"input_tokens=(\S+) output_tokens=(\S+) cost_usd=(\S+)")
@@ -302,6 +303,9 @@ BANNER = ("SAMPLE MODE: Zetaris results and the model reply are replayed from re
 
 def main(argv=None, env=None, ask_fn=None):
     args = parse_args(argv)
+    if len(args.question) > MAX_QUESTION:
+        print(f"The question is too long ({len(args.question)} characters; the limit is {MAX_QUESTION}).", file=sys.stderr)
+        return 2
     env_map = os.environ if env is None else env
     sample = args.sample or sample_mode.enabled(env_map)
     if sample and args.record:
