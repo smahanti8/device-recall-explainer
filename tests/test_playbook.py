@@ -27,6 +27,7 @@ import json
 import os
 import re
 import unittest
+from unittest import mock
 
 from dotenv import load_dotenv
 
@@ -37,6 +38,15 @@ from agent.playbook import collect_facts, make_playbook_draft_fn
 
 load_dotenv()
 CODES = ["DSY", "ABC", "OEZ"]  # ABC has no record-level view
+
+
+def setUpModule():
+    # these tests script plain chat fakes; escalation has its own tests, and another test module's
+    # load_dotenv() can put the setting back at import time, so clear it when the tests actually run
+    patch = mock.patch.dict(os.environ)
+    patch.start()
+    os.environ.pop("NEMOTRON_ESCALATION_MODEL", None)
+    unittest.addModuleCleanup(patch.stop)
 
 
 class AnyColumn(dict):

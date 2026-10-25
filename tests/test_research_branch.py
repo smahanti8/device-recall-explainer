@@ -27,6 +27,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 from agent import playbook, runlog
 from agent.evaluator import Citation, Claim, Rejection, Verdict
@@ -34,6 +35,16 @@ from agent.llm import Reply
 from agent.loop import Draft, Result, investigate
 from agent.main import ask
 from agent.playbook import DRILLDOWN_CODES, RECORD_LEVEL_CODES, collect_code_facts, collect_facts, make_playbook_draft_fn
+
+
+def setUpModule():
+    # these tests script plain chat fakes; escalation has its own tests, and another test module's
+    # load_dotenv() can put the setting back at import time, so clear it when the tests actually run
+    patch = mock.patch.dict(os.environ)
+    patch.start()
+    os.environ.pop("NEMOTRON_ESCALATION_MODEL", None)
+    unittest.addModuleCleanup(patch.stop)
+
 
 MORE = ("DQK", "DPT", "DRE", "DWF", "OES", "DYF", "OEQ")
 TOP5 = ["DSY", "DQO", "OEZ", "DQK", "DPT"]
