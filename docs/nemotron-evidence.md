@@ -28,8 +28,8 @@ No keys or tokens appear in this file or in the probe output.
 ## Real agent calls (playbook mode)
 
 Receipts from the agent answering "Why did cardiovascular device recall records rise between 2023
-and 2024, and which product codes drove it?" Every claim in the answer was re-checked against
-Zetaris by the evaluator before the run counted as verified.
+and 2024, and which product codes drove it?" Every claim in the answer was checked by the evaluator against
+the stored result of its cited SQL before the run counted as verified.
 
 | Run (24 Oct 2026, UTC-4) | Entry point | Receipt | routed_model | Claims verified | Model turn (wall clock) |
 |---|---|---|---|---|---|
@@ -60,4 +60,34 @@ directory, which was cleared before each session. Every call was routed to
 | 2 | 2 | recalled 4 hints | 22, round 1 | rcpt_req_xkqh4x5l, rcpt_req_dzso08xp |
 
 The second run of each session makes two model calls. Recalled hints are labelled as hints, not
-evidence: every number in the answer still cites fresh SQL, which the evaluator re-runs.
+evidence: every number in the answer still cites its own SQL, and the evaluator checks it against that query's result.
+
+## Escalation run: Lightning, then Ultra (25 Oct 2026)
+
+`python -m agent.main --playbook --verbose --report --record sample_data "<question>"` with
+`NEMOTRON_ESCALATION_MODEL=nvidia/nemotron-3-ultra-550b-a55b`, memory cleared first. Round 1 was drafted on
+Lightning and 2 claims were rejected as `missing_evidence` (DQK and DPT named without detail). The evidence
+branch fetched their detail from Zetaris and the redraft was sent to Ultra; round 2 verified all 35 claims.
+Both calls were routed as requested, and both receipts report `egress = nvidia`. Log: `logs/sample-run-1.jsonl`.
+
+| Call (UTC) | Round | Receipt | routed_model | Tokens in / out |
+|---|---|---|---|---|
+| 06:28:21 | 1 | rcpt_req_dv9gxx4q | nvidia/nemotron-3.5-lightning-30b-a3b | 2,392 / 2,672 |
+| 06:28:46 | 2 (redraft) | rcpt_req_63urdzfk | nvidia/nemotron-3-ultra-550b-a55b | 2,686 / 1,730 |
+
+Totals as printed by the run: 2 model calls, 5,078 in, 4,402 out; 36 Zetaris queries fetched, 86 served from
+the in-run cache. The cost field in the receipts reads $0.0000, so no cost is claimed.
+
+## Exploratory run: no verified answer (25 Oct 2026)
+
+`python -m agent.main --verbose --report --no-memory "<question>"` (the default mode, where the model drives the
+investigation). Three rounds, 12 model calls, all routed to `nvidia/nemotron-3.5-lightning-30b-a3b`; the evaluator
+rejected every draft, so no answer was printed. Log: `logs/sample-exploratory-run-1.jsonl`. The first call's
+receipt carries no `egress` value and reports 27 tokens in, so it may have come from Nightshift's cache.
+
+Receipts, in order: rcpt_req_9rsd4u40, rcpt_req_bdivv8rq, rcpt_req_mupwtpry, rcpt_req_z9374tgb,
+rcpt_req_00w4jv9t, rcpt_req_qp79mns2 (round 1); rcpt_req_w3g2pdqn, rcpt_req_vthwv528, rcpt_req_82yjjt6m,
+rcpt_req_1i3dlyv2, rcpt_req_txbbgufv (round 2); rcpt_req_67dh6cl4 (round 3).
+
+Totals as printed by the run: 50,624 tokens in, 34,623 out; 49 Zetaris queries fetched, 4 failed; 8 provider
+retries and 1 failed call.
