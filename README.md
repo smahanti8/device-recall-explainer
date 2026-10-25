@@ -91,6 +91,7 @@ Design choices that keep a run small, safe, cheap to inspect and repeatable. Eac
 | **Token and cost line** | Every model call's input tokens, output tokens and the cost Nightshift reports are summed and printed as `Tokens:` | `agent/main.py`, `agent/llm.py` |
 | **Observability line** | Each run prints Zetaris queries fetched versus served from cache, calls per model, retries and failed calls. The numbers are counted from what ran | `agent/observability.py` |
 | **SQL guard** | Before any request reaches Zetaris, `run_sql` accepts one `SELECT`/`WITH` statement whose tables are all `openfda` views (or CTEs of the same statement), and refuses write keywords (`insert`, `update`, `delete`, `merge`, `create`, `alter`, `drop`, `truncate`, `grant`, `revoke`, `call`, `exec`) and the Java-calling functions `reflect` and `java_method`. In playbook mode the model never writes SQL; in exploratory mode it does. The guard protects Zetaris, not the model bill, because the model has already written the SQL by then. A question over 500 characters is refused up front | `agent/tools_zetaris.py`, `agent/main.py` |
+| **Scope check** | Before any model call or query, the question must mention recalls, devices, cardiovascular, root causes, firms or a known product code, and any year other than 2023 and 2024 is refused, because the registered tables hold only those years. A refused question exits with code 2, prints why, writes one log event, and with `--json` returns `verified: false` and `reason: "out_of_scope"` | `agent/scope.py`, `agent/main.py` |
 | **Bounded retries** | At most 2 concurrent model calls and 5 attempts per call with backoff; a failed call costs one round, not the run | `agent/llm.py`, `agent/loop.py` |
 | **Structured run log** | A JSONL event per step (agent, action, model, status, retry count, token counts), with secrets redacted | `agent/runlog.py` |
 | **HTML report** | `--report` writes one self-contained page: the answer with each number linked to its proof, rounds, queries, receipts, tokens and the observability panel | `agent/report.py` |
@@ -141,7 +142,7 @@ To record again from live services: `--record sample_data` on a live run.
 
 Three sample questions, each recorded from a real run, replay offline with `SAMPLE_MODE=true` (see "Sample mode") and are
 checked by `tests/test_sample_examples.py`. A fourth sample, in the default exploratory mode, shows the gate refusing to
-print an answer it could not verify.
+print an answer it could not verify, and a fifth shows an out-of-scope question being refused before anything runs.
 
 | # | Question | Mode | Result | Log and report |
 |---|---|---|---|---|
@@ -149,6 +150,7 @@ print an answer it could not verify.
 | 2 | Which three product codes drove the increase in cardiovascular device recalls from 2023 to 2024, and what share of the increase do they account for? | `--playbook` | 1 round, 20 claims verified. The top three codes (DSY, DQO, OEZ) added 131 of the 201 records, 65.2% | `logs/sample-run-2.jsonl`, `reports/sample-run-2.html` |
 | 3 | For product code DSY, how many 2024 recall records were there, how many distinct recall events and firms, and what was the top root cause? | `--playbook` | 1 round, 4 claims verified. "DSY had 54 recall records in 2024 from 1 event involving 1 firm, with the top root cause Equipment maintenance." | `logs/sample-run-3.jsonl`, `reports/sample-run-3.html` |
 | 4 | The question from sample 1 | default (exploratory) | 3 rounds, no verified answer: the evaluator rejected every draft (SQL Zetaris could not run, a share figure the SQL did not return, numbers in the text that no claim backed) | `logs/sample-exploratory-run-1.jsonl`, `reports/sample-exploratory-run-1.html` |
+| 5 | What is the capital of France? | any | Refused with exit code 2 and "Out of scope: This agent answers questions about FDA cardiovascular device recalls in 2023 and 2024...". No model call and no Zetaris query | `logs/sample-refusal-1.jsonl` (one `scope_check` event) |
 
 Samples 1 to 3 are different questions, but they draw on the same fixed set of facts: the playbook collects the same
 queries whatever is asked, and the model chooses which verified facts to use, so the samples differ in focus (a narrow
@@ -351,7 +353,7 @@ Major decisions, with what was rejected and what each one costs. Failures are li
 
 | Area | What the agent does |
 |---|---|
-| Input validation | A question over 500 characters is refused. SQL must pass the guard (one `SELECT`/`WITH`, `openfda` tables only, no write keywords). Missing settings stop the run with a message that names them |
+| Input validation | A question over 500 characters, or outside the data's scope (topic and years), is refused. SQL must pass the guard (one `SELECT`/`WITH`, `openfda` tables only, no write keywords). Missing settings stop the run with a message that names them |
 | Safe handling of content | The question and the openFDA text that reaches the model are treated as untrusted: the model has no tool except guarded, read-only SQL, and it cannot make a number appear in the answer without a claim that the evaluator verifies. The HTML report escapes everything that comes from a run. Secrets are redacted from run logs |
 | No unauthorised actions | The agent only reads (guarded SQL over public data). It writes only to local files: run logs, reports, the memory folder and, when asked, sample recordings |
 | Human review | The output is descriptive statistics for a person to read. Every number links to the SQL and cell that back it, so a reviewer can check it before anyone acts on it. Nothing is decided or sent on the user's behalf |
@@ -365,7 +367,8 @@ Major decisions, with what was rejected and what each one costs. Failures are li
 - Playbook mode answers one question shape; the exploratory mode is general but has not yet produced a verified answer in live runs (the evaluator rejected each draft).
 - Within one run, identical SQL is served from an in-memory cache, so a citation is checked against the stored result of that query rather than a second round-trip to Zetaris. A new run fetches again.
 - Model turns are slow (tens of seconds each) and the provider sometimes times out; the loop records a failed round and continues.
-- The scope check is a word check on the claim text, not a semantic one.
+- The evaluator's scope check is a word check on the claim text, not a semantic one.
+- The question scope check is a keyword and year check, not understanding: an off-topic question that happens to contain a recall word passes, and it is not an injection filter (the SQL guard and the evaluator are the protections for that).
 - The reference H-MEM embedder is a deterministic hash, so recall relies on tags and keywords.
 - The agent can only investigate what the registered tables cover.
 
