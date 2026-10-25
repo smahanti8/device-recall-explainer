@@ -130,7 +130,7 @@ docker run --rm --env-file .env -e SAMPLE_MODE=false device-recall-explainer "<q
 docker run --rm --entrypoint python device-recall-explainer -W ignore -m unittest discover -s tests   # tests
 ```
 
-The build and the full test suite were run in the container on Python 3.11 (284 tests, live ones skipped); the code is
+The build and the full test suite were run in the container on Python 3.11 (317 tests, live ones skipped); the code is
 also tested locally on Python 3.9. `.env` is never copied into the image (see `.dockerignore`); a live run reads the
 settings from `--env-file`. A live run from the container needs a Zetaris and a Nightshift endpoint it can reach, and on
 Docker Desktop for Mac `localhost` inside the container is the container itself, so point `ZETARIS_REST_URL` and
