@@ -1,0 +1,59 @@
+H-MEM test log (Meterless Engine: persistent memory)
+Generated: 2026-10-25T17:08:47Z
+Engine: Meterless H-MEM reference, upstream commit 1742dec56a66e58eef9dda2d2b865823758ca8cd (engines/hmem/NOTICE.md)
+Python 3.9.6, Node v26.0.0
+
+== 1. The engine's own conformance suite (vendored, unmodified)
+$ cd engines/hmem/reference && npx tsx ../conformance/runner.ts
+
+H-MEM conformance: implementation = engines/hmem/reference/src/index.ts
+
+  record-validation
+    PASS rv-001 a record with no source is rejected by construction
+    PASS rv-002 a record with a source is accepted
+
+  feedback-deltas
+    PASS fd-001 helpful adds exactly +0.05 confidence and +1 accessCount
+    PASS fd-002 not_helpful subtracts exactly 0.03
+    PASS fd-003 wrong subtracts exactly 0.20 and adds the review tag
+    PASS fd-004 confidence clamps at 0 (wrong at 0.1)
+    PASS fd-005 confidence clamps at 1 (helpful at 0.98)
+
+  ranking-order
+    PASS ro-001 superseded penalty dominates: a superseded record ranks below a fresh one with identical content relevance
+    PASS ro-002 confidence multiplies the whole score: identical records rank by confidence
+
+  sleep-guardrails
+    PASS sg-001 old low-access plain record archives; dream-derived record with identical age does not
+
+  conflict-gate
+    PASS cg-001 auto-resolve marks the loser supersededBy and deletes nothing
+
+  ledger-audit
+    PASS la-001 create then feedback reconstructs: actions in order, previous and new confidence present
+
+  dream-boundary
+    PASS db-001 dream proposals never materialize before approval; approval creates a long_term record with lineage
+
+  13/13 checks passed
+
+== 2. This repo's memory tests (bridge, upsert, recall across processes, audit ledger)
+$ .venv/bin/python -W ignore -m unittest tests.test_memory -v
+test_a_claim_without_a_citation_is_never_stored (tests.test_memory.Protocol) ... ok
+test_cardiovascular_claims_are_tagged (tests.test_memory.Protocol) ... ok
+test_context_for_labels_hints_as_not_evidence (tests.test_memory.Protocol) ... ok
+test_learn_reports_new_reinforced_and_changed (tests.test_memory.Protocol) ... ok
+test_learn_upserts_each_accepted_claim_and_skips_rejected_ones (tests.test_memory.Protocol) ... ok
+test_mark_wrong_and_feedback_validation (tests.test_memory.Protocol) ... ok
+test_recall_sends_a_query_and_parses_the_hits (tests.test_memory.Protocol) ... ok
+test_remember_stores_the_claim_with_its_sql_as_source (tests.test_memory.Protocol) ... ok
+test_a_changed_value_supersedes_the_old_record (tests.test_memory.WithTheRealEngine) ... ok
+test_a_second_session_recalls_what_the_first_stored (tests.test_memory.WithTheRealEngine) ... ok
+test_storing_the_same_claim_twice_keeps_one_record (tests.test_memory.WithTheRealEngine) ... ok
+test_the_audit_ledger_records_creation_and_feedback (tests.test_memory.WithTheRealEngine) ... ok
+test_the_vendored_engine_still_passes_its_conformance_suite (tests.test_memory.WithTheRealEngine) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 2.533s
+
+OK

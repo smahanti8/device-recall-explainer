@@ -192,6 +192,7 @@ append-only audit ledger of every add and feedback.
 - a test stores a claim in one Node process and recalls it from another, with state read from disk
 - a test confirms the ledger records creation and feedback
 - tests confirm that storing the same claim twice keeps one record, and that a changed value supersedes the old one
+- a saved run of the conformance suite and these tests, with versions and the upstream commit: `docs/hmem-test-log.txt`
 
 **See it work:** run the command from "Setup" twice with the same `--memory-dir` (default `.hmem`),
 then look at the "Memory:" line of the first run and the recalled hints sent in the second.
