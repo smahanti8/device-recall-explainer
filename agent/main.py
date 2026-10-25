@@ -5,6 +5,7 @@ model receipts, and remembers the claims that were verified.
 """
 import argparse
 import datetime
+import json
 import logging
 import os
 import re
@@ -132,7 +133,10 @@ def _report_data(result, question, state, receipts, queries, timeline, memory_li
 
 
 def _ask(question, memory, *, make_draft, make_playbook, run_investigation, evaluate_fn, out, progress,
-         verbose, playbook, log, report_dir, run_sql, now):
+         verbose, playbook, log, report_dir, run_sql, now, as_json=False):
+    real_out = out
+    if as_json:  # stdout carries one JSON document; progress stays on stderr
+        out = lambda line: None  # noqa: E731
     raw_progress = progress or _stderr
     timeline = []
 
@@ -224,18 +228,31 @@ def _ask(question, memory, *, make_draft, make_playbook, run_investigation, eval
             out(f"note: memory unavailable ({error}); the answer above is unaffected")
     if log:
         out(f"note: could not write the run log ({log.error})" if log.failed else f"Log: {log.path}")
+    report_path = None
     if report_dir:
         data = _report_data(result, question, state, receipts, queries, timeline, memory_line,
                             run_sql or tools_zetaris.peek, now)
         data["observability"] = summary
-        path = run_report.write(data, report_dir, now=now)
+        path = report_path = run_report.write(data, report_dir, now=now)
         out(f"Report: {path}" if path else f"note: could not write the report (nothing could be written to {report_dir})")
+    if as_json:
+        real_out(json.dumps(_json_document(result, question, receipts, summary, log, report_path)))
     return result
+
+
+def _json_document(result, question, receipts, summary, log, report_path):
+    return {"question": question, "verified": bool(result.text), "answer": result.text, "rounds": result.rounds,
+            "claims": [{"text": c.text, "value": c.value, "sql": c.citation.sql, "column": c.citation.column,
+                        "row": c.citation.row} for c in result.claims],
+            "unsupported": [] if result.text else [{"text": c.text, "value": c.value} for c in result.unsupported],
+            "trace": result.trace, "receipts": receipts.items, "tokens": receipts.tokens, "observability": summary,
+            "log": log.path if log and not log.failed else None, "report": report_path}
 
 
 def ask(question, memory=None, *, make_draft=make_draft_fn, make_playbook=make_playbook_draft_fn,
         run_investigation=investigate, evaluate_fn=evaluate, out=print, progress=None,
-        verbose=False, playbook=False, log_dir=None, now=None, report_dir=None, run_sql=None, timeout=None):
+        verbose=False, playbook=False, log_dir=None, now=None, report_dir=None, run_sql=None, timeout=None,
+        as_json=False):
     log = RunLog(log_dir, now=now) if log_dir else None
     if log:
         runlog.start(log)
@@ -244,7 +261,7 @@ def ask(question, memory=None, *, make_draft=make_draft_fn, make_playbook=make_p
         return _ask(question, memory, make_draft=make_draft, make_playbook=make_playbook,
                     run_investigation=run_investigation, evaluate_fn=evaluate_fn, out=out, progress=progress,
                     verbose=verbose, playbook=playbook, log=log, report_dir=report_dir,
-                    run_sql=run_sql, now=now)
+                    run_sql=run_sql, now=now, as_json=as_json)
     finally:
         deadline.stop()
         if log:
@@ -265,6 +282,8 @@ def parse_args(argv=None):
                         help="offline demonstration: replay recordings of a real run (also SAMPLE_MODE=true)")
     parser.add_argument("--sample-dir", default="sample_data", help="where the recordings are read from")
     parser.add_argument("--record", metavar="DIR", help="record this live run's Zetaris results and model replies")
+    parser.add_argument("--json", action="store_true", dest="as_json",
+                        help="print one JSON document on stdout (progress stays on stderr)")
     parser.add_argument("--timeout", type=int, default=600, metavar="SECONDS",
                         help="stop the run after this many seconds with no answer (default 600; 0 = no limit)")
     parser.add_argument("--playbook", action="store_true",
@@ -305,7 +324,7 @@ def main(argv=None, env=None, ask_fn=None):
         memory = None if args.no_memory else Memory(args.memory_dir)
         run = ask_fn or ask
         result = run(args.question, memory, verbose=args.verbose, playbook=args.playbook,
-                     log_dir=None if args.no_log else args.log_dir, timeout=args.timeout,
+                     log_dir=None if args.no_log else args.log_dir, timeout=args.timeout, as_json=args.as_json,
                      report_dir=args.report_dir if args.report else None)
     except SampleModeError as error:
         print(str(error), file=sys.stderr)
