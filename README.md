@@ -118,12 +118,18 @@ then look at the "Memory:" line of the first run and the recalled hints sent in 
 
 ## Data
 
-Registered by `sql/` (run in the Zetaris SQL Editor, one statement at a time, about 15 seconds
-apart, because keyless openFDA rate-limits):
+One command registers everything in Zetaris (it needs `ZETARIS_*` in `.env`):
 
-1. `sql/openfda_spike.sql` steps 0 to 3: the database, the container and a first table
+```bash
+.venv/bin/python -m agent.setup_data --verify
+```
+
+It runs the files in `sql/` in order, skips anything that already exists, stops on any other error, and waits 15 seconds after each REST table because keyless openFDA rate-limits. `--dry-run` lists the statements without running them, and `--verify` checks that the key views answer.
+
+1. `sql/openfda_spike.sql`: the database, the container and a first table
 2. `sql/openfda_register.sql`: cardiovascular device types, recalls per product code, root causes (2023, 2024)
 3. `sql/openfda_drilldown.sql`: record-level 2024 recalls for three product codes
+4. `sql/openfda_drilldown_more.sql`: record-level 2024 recalls for seven more product codes
 
 Tables are fixed slices of the API (one REST table is one request), so the agent reasons over
 what is registered, not the whole dataset. Queries use `openfda.<view>`; the system prompt lists them.
@@ -139,7 +145,7 @@ cp .env.example .env            # fill in your own values; never commit .env
 (cd engines/hmem/reference && npm ci --ignore-scripts)
 ```
 
-Register the data as described above, then:
+Register the data (see "Data" above: `.venv/bin/python -m agent.setup_data --verify`), then:
 
 ```bash
 .venv/bin/python -m agent.main "Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?"
