@@ -6,7 +6,7 @@ and refuses to state any number it cannot trace to a query.
 Example question: *Why did cardiovascular device recall records rise between 2023 and 2024,
 and which product codes drove it?*
 
-The data is public openFDA recall and classification data, registered in Zetaris as
+The data is real, public openFDA recall and classification data (no patient data), registered in Zetaris as
 SQL tables. The agent investigates with read-only SQL, then writes an answer in which every
 number is a **claim that cites a cell of a SQL result**. An evaluator checks each claim against the result of its cited SQL and
 rejects the draft if a claim has no citation, cites the wrong scope, or does not match the cell.
@@ -174,6 +174,33 @@ smoke_test.py checks Zetaris and the model route from .env
 - The SQL files follow the REST-table pattern of Zetaris's public getting-started recipes (https://github.com/zetaris/getting-started).
 - Open-source libraries: `openai`, `python-dotenv`, `requests` (Python); `tsx`, `vitest` (dev tools in the vendored engine).
 
+## Decisions and failures
+
+Major decisions, with what was rejected and what each one costs. Failures are listed because they shaped the design.
+
+| # | Decision | Why, and the trade-off |
+|---|---|---|
+| 1 | **Data: public openFDA recall and classification records**, registered in Zetaris as REST tables | Real, public, structured and keyless, with no patient data. Zetaris cannot read files on a laptop, which ruled out local CSVs. Trade-off: one REST table is one request, so the agent works over registered slices, and keyless openFDA rate-limits |
+| 2 | **Every number is a claim that cites a SQL cell**, checked by an evaluator | Rejected: free-text answers, and a second model as judge (not deterministic). Trade-off: eight rejection reasons to maintain, and the model must produce citations |
+| 3 | **A scope check and an unclaimed-number check** were added to the evaluator | Live traces showed the model labelling an all-device total "cardiovascular" and writing figures in prose that no claim backed. Trade-off: the scope check is a word check on the claim text, not meaning |
+| 4 | **Report recall records and distinct recall events separately** | One product code in 2024 has 54 records but a single event, so "recalls rose" is ambiguous. Trade-off: more claims per answer |
+| 5 | **Two drafting modes: exploratory (default) and playbook (`--playbook`)** | The exploratory model-driven mode did not complete in live runs (see below). In playbook mode code runs the fixed queries and the model only replies with fact ids, which completed live runs. Trade-off: the playbook covers one question shape |
+| 6 | **H-MEM reference vendored unmodified** (`engines/hmem`) | Implementing the spec from scratch was not feasible in the time; the organisers' guidance was that the reference is acceptable if it is a real working feature and documented here. Rejected: Markovian, because it would own the loop that the evaluator already controls. Trade-off: the reference's embedder is a hash, so recall relies on tags and keywords |
+| 7 | **Memory gives hints, never evidence** | A recalled claim can never be cited; every number still needs its own SQL result. Trade-off: memory adds continuity and an audit trail, but does not make an answer more accurate by itself |
+| 8 | **Remembered claims are upserted**: the same value is reinforced, a new value supersedes the old record | The first memory demo stored 22 duplicate records. Trade-off: matching is by claim text |
+| 9 | **Model route: Meterless Nightshift to Nemotron 3.5 Lightning**, at most 2 concurrent calls, retries with waits of 3 to 24 seconds | Four parallel calls caused 502 errors. Every response carries a receipt naming the model, which the CLI prints |
+| 10 | **Query results are cached in memory per run, by exact SQL text** | Saves rate-limit quota and makes a run repeatable. Rejected: a disk cache (could hide a real data change) and an openFDA key in `.env` (the tables call openFDA from inside Zetaris, so the key would have to be in each table's URL). Trade-off: a citation is checked against the stored result, not re-queried |
+| 11 | **Tests first, with expected values from independent openFDA calls** | A bug in a Zetaris view cannot hide behind its own output. Trade-off: live checks need Zetaris and the model, so they skip themselves when settings are missing |
+| 12 | **Settings are checked before a run** | A missing variable used to end in a stack trace; it now names the variable and points at `.env.example` |
+
+**Failures and what they taught us**
+
+- **Two models in Nightshift's catalog returned `410 Gone`** (`nvidia/nemotron-3-nano-30b-a3b` and the Llama 3.3 Nemotron Super 49B). The catalog was stale; Lightning and Ultra worked. The agent now surfaces such errors as a failed round instead of crashing.
+- **The exploratory mode never completed a live run.** Runs reached 12 to 16 model turns and then hit Nightshift `502` errors (`empty_response`, `provider_deadline`), and Zetaris rejects a statement that references the same view twice. Fixes helped (a larger token budget, batched queries, a one-view-per-statement rule) but did not produce a completed run, so the documented live evidence is playbook mode only.
+- **`/no_think` did not stop the model reasoning**: turns used 1.4k to 4.4k completion tokens, so a small token cap returned an empty reply. Every turn now asks for 8,000 tokens.
+- **The evaluator was described as re-running SQL, but the cache means it checks the stored result.** The wording was corrected here and in the write-up.
+- **Some model replies come from Nightshift's cache** (reported as 0.0s), so receipt latencies are not a measure of model speed.
+
 ## Known limits
 
 - Playbook mode answers one question shape; the exploratory mode is general but has been slower and less reliable in live runs.
@@ -182,3 +209,8 @@ smoke_test.py checks Zetaris and the model route from .env
 - The scope check is a word check on the claim text, not a semantic one.
 - The reference H-MEM embedder is a deterministic hash, so recall relies on tags and keywords.
 - The agent can only investigate what the registered tables cover.
+
+## License
+
+MIT for this repository's code (see `LICENSE`). `engines/hmem/` is the Meterless H-MEM reference
+implementation under Apache-2.0 (see `engines/hmem/LICENSE` and `engines/hmem/NOTICE.md`).
