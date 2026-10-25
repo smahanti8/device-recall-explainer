@@ -1,7 +1,7 @@
 """Citation gate: a claim stands only if its cited SQL cell equals the stated value.
 
 Every number in an answer must be computed by SQL, never by the model. The
-evaluator re-runs each claim's citation and compares the cell with the claim.
+evaluator checks each claim's cited SQL result and compares the cell with the claim.
 """
 import math
 import re
