@@ -36,10 +36,20 @@ def _reset():
     _state.update(mode=None, dir=None, queries={}, replies={}, recorded_at=None, model=None)
 
 
+def _load(directory, name, key):
+    try:
+        with open(os.path.join(str(directory), name)) as handle:
+            return dict(json.load(handle).get(key) or {})
+    except (OSError, ValueError, AttributeError, TypeError):
+        return {}
+
+
 def start_recording(directory, now=None):
     _reset()
     stamp = (now or datetime.datetime.utcnow)()
-    _state.update(mode="record", dir=str(directory), recorded_at=stamp.strftime("%Y-%m-%dT%H:%M:%SZ"))
+    _state.update(mode="record", dir=str(directory), recorded_at=stamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                  queries=_load(directory, QUERIES_FILE, "queries"),  # earlier recordings stay; new ones replace same keys
+                  replies=_load(directory, REPLIES_FILE, "replies"))
 
 
 def start_replay(directory):

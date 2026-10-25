@@ -316,7 +316,8 @@ class ShippedSampleLogs(unittest.TestCase):
                 for event in events:
                     self.assertTrue(FIELDS <= set(event), event)
                 actions = [e["action"] for e in events]
-                self.assertEqual((actions[0], actions[-1]), ("run_start", "run_end"))
+                self.assertEqual(actions[0], "run_start")
+                self.assertIn("run_end", actions)  # memory events can follow it
                 self.assertFalse(events[0]["sample_mode"])
                 models = [e["model"] for e in events if e["action"] == "model_call" and e["status"] == "success"]
                 self.assertTrue(models and all(m.startswith("nvidia/") for m in models), models)
