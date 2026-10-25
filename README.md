@@ -77,6 +77,16 @@ covers one question shape (cardiovascular recalls, 2023 against 2024); the explo
 Meterless Nightshift runtime. At most 2 calls run at once, provider errors are retried 5 times
 (waits of 3, 6, 12 and 24 seconds), and every call logs `routed_model` and `receipt_id`.
 
+## Agent roles and how they interact
+
+| Role | What it is | Interaction |
+|---|---|---|
+| **Drafter** | One model (Nemotron through Nightshift), either exploring with read-only SQL or, in playbook mode, explaining numbered facts | Produces a draft: text plus claims, each citing a SQL cell |
+| **Evaluator** | Deterministic code, not a model | Checks every claim and returns rejection reasons; the loop hands them back to the drafter for up to three rounds |
+| **Memory** | H-MEM, the Meterless engine | Supplies recalled hints before drafting; stores the claims that were verified |
+
+This is a drafter, an evaluator and a memory in a retry loop. It is not a multi-agent swarm: the evaluator is code, and playbook mode is a fixed pipeline (queries, one model call, evaluator). In both recorded runs the evaluator accepted the first draft; the rejection and retry paths are covered by tests.
+
 ## Meterless Engine: H-MEM
 
 **Engine used:** H-MEM (persistent memory), the Meterless reference implementation, vendored
@@ -201,6 +211,22 @@ Major decisions, with what was rejected and what each one costs. Failures are li
 - **The evaluator was described as re-running SQL, but the cache means it checks the stored result.** The wording was corrected here and in the write-up.
 - **Some model replies come from Nightshift's cache** (reported as 0.0s), so receipt latencies are not a measure of model speed.
 
+## AI and Model Usage
+
+**Models (through Meterless Nightshift, the primary AI provider)**
+- `nvidia/nemotron-3.5-lightning-30b-a3b`: writes the explanation from numbered facts in playbook mode, and in exploratory mode drives the investigation with read-only SQL and writes cited claims. Nightshift's receipt for every call names the model that answered (`routed_model`); the command line prints it.
+- No other model is used. There is no fine-tuning, and no embeddings model: the H-MEM reference uses a deterministic hash embedder.
+
+**Agent framework:** none; the loop, evaluator and drafter are custom code.
+
+**Sponsor technology:** Zetaris is the data layer (read-only SQL over openFDA tables), Meterless H-MEM is the engine used in a working feature (see "Meterless Engine: H-MEM"), and NVIDIA Nemotron answers through Nightshift.
+
+**Development tools:** built with Claude Code, an AI coding agent, which was used for implementation, tests, debugging and documentation. The tests for each module were specified and approved before its implementation, and the work is in small commits that can be reviewed one by one.
+
+**Data:** real, public openFDA recall and classification records. There is no patient data and no synthetic data. Source: https://open.fda.gov/ (terms: https://open.fda.gov/terms/). The tests use small made-up values for the fake-service checks and say so.
+
+**Fallback and limits:** provider failures are retried and recorded as a failed round; see "Known limits" for what is not covered.
+
 ## Known limits
 
 - Playbook mode answers one question shape; the exploratory mode is general but has been slower and less reliable in live runs.
@@ -209,6 +235,17 @@ Major decisions, with what was rejected and what each one costs. Failures are li
 - The scope check is a word check on the claim text, not a semantic one.
 - The reference H-MEM embedder is a deterministic hash, so recall relies on tags and keywords.
 - The agent can only investigate what the registered tables cover.
+
+## Third-party code and licences
+
+| Component | Licence | Use |
+|---|---|---|
+| Meterless H-MEM reference implementation and conformance suite | Apache-2.0 | Vendored unmodified in `engines/hmem/` (see `NOTICE.md`) |
+| `openai` (Python SDK) | Apache-2.0 | OpenAI-compatible client for Nightshift |
+| `requests` | Apache-2.0 | Zetaris REST calls |
+| `python-dotenv` | BSD-3-Clause | Loads `.env` |
+| `tsx`, `vitest` | MIT | Dev tools inside the vendored engine |
+| Zetaris getting-started recipes | see https://github.com/zetaris/getting-started | The REST-table pattern in `sql/` follows its public recipes |
 
 ## License
 
