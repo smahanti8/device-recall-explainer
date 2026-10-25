@@ -5,6 +5,7 @@ model receipts, and remembers the claims that were verified.
 """
 import argparse
 import logging
+import os
 import re
 import sys
 
@@ -15,6 +16,8 @@ from agent.loop import investigate
 from agent.playbook import make_playbook_draft_fn
 from agent.memory import Memory
 
+REQUIRED_SETTINGS = ("ZETARIS_REST_URL", "ZETARIS_ORG_ID", "ZETARIS_API_KEY",
+                     "MODEL_BASE_URL", "MODEL_API_KEY", "NEMOTRON_MODEL")
 _RECEIPT = re.compile(r"routed_model=(\S+) receipt_id=(\S+)")
 _LATENCY = re.compile(r"latency_ms=(\S+)")
 
@@ -154,10 +157,21 @@ def parse_args(argv=None):
     return parser.parse_args(argv)
 
 
-def main(argv=None):
+def missing_settings(env=None):
+    env = os.environ if env is None else env
+    return [name for name in REQUIRED_SETTINGS if not str(env.get(name, "")).strip()]
+
+
+def main(argv=None, env=None, ask_fn=None):
     args = parse_args(argv)
+    missing = missing_settings(env)
+    if missing:
+        print(f"Missing settings: {', '.join(missing)}.\n"
+              "Copy .env.example to .env and fill them in (see Setup in the README).", file=sys.stderr)
+        return 2
     memory = None if args.no_memory else Memory(args.memory_dir)
-    return 0 if ask(args.question, memory, verbose=args.verbose, playbook=args.playbook).text else 1
+    run = ask_fn or ask
+    return 0 if run(args.question, memory, verbose=args.verbose, playbook=args.playbook).text else 1
 
 
 if __name__ == "__main__":
