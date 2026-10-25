@@ -8,7 +8,7 @@ and which product codes drove it?*
 
 The data is public openFDA recall and classification data, registered in Zetaris as
 SQL tables. The agent investigates with read-only SQL, then writes an answer in which every
-number is a **claim that cites a cell of a SQL result**. An evaluator re-runs each citation and
+number is a **claim that cites a cell of a SQL result**. An evaluator checks each claim against the result of its cited SQL and
 rejects the draft if a claim has no citation, cites the wrong scope, or does not match the cell.
 Rejection reasons go back to the model for another attempt.
 
@@ -43,7 +43,7 @@ drafter --- read-only SQL --> Zetaris --> openFDA tables
 draft: text + claims {value, sql, column, row}
    |
    v
-evaluator: re-run every claim's SQL, compare the cell, check scope and unclaimed numbers
+evaluator: fetch the result of every claim's cited SQL, compare the cell, check scope and unclaimed numbers
    |
    v
 accepted --> printed trace + model receipts --> verified claims stored in memory
@@ -70,7 +70,7 @@ down (one product code in 2024 has 54 records but a single event).
 the results, and answers with cited claims (`agent/drafter.py`). With `--playbook`, code runs a fixed set
 of queries first (`agent/playbook.py`): each result becomes a numbered fact whose label names its scope and
 whose citation is the exact SQL that produced it. The model only replies with the fact ids it used, so a
-citation cannot be malformed, and the evaluator still re-checks every number against Zetaris. The playbook
+citation cannot be malformed, and the evaluator still checks every number against the result of its cited SQL. The playbook
 covers one question shape (cardiovascular recalls, 2023 against 2024); the exploratory mode is general.
 
 **Model access** (`agent/llm.py`). All calls go to an OpenAI-compatible endpoint, normally the
@@ -92,7 +92,7 @@ unmodified in `engines/hmem/` (Apache-2.0; see `engines/hmem/NOTICE.md` for the 
 
 **Effect:** a second session recalls what the first one verified (for example "DSY recall records
 in 2024: 54", with its SQL), so the agent starts from known baselines. The run reports the outcome, for example `Memory: 0 new, 22 reinforced, 0 changed`. Recalled hints are never
-evidence: every number in an answer must still cite fresh SQL, which the evaluator re-runs.
+evidence: every number in an answer must still cite its own SQL, and the evaluator checks the claim against that query's result.
 
 **State and audit:** `.hmem/state.json` holds the records and `.hmem/ledger.jsonl` is the engine's
 append-only audit ledger of every add and feedback.
@@ -177,6 +177,7 @@ smoke_test.py checks Zetaris and the model route from .env
 ## Known limits
 
 - Playbook mode answers one question shape; the exploratory mode is general but has been slower and less reliable in live runs.
+- Within one run, identical SQL is served from an in-memory cache, so a citation is checked against the stored result of that query rather than a second round-trip to Zetaris. A new run fetches again.
 - Model turns are slow (tens of seconds each) and the provider sometimes times out; the loop records a failed round and continues.
 - The scope check is a word check on the claim text, not a semantic one.
 - The reference H-MEM embedder is a deterministic hash, so recall relies on tags and keywords.
