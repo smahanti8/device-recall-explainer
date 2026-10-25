@@ -117,6 +117,23 @@ SAMPLE_MODE=true .venv/bin/python -m agent.main "Why did cardiovascular device r
 
 What is replayed: the Zetaris results (`sample_data/zetaris_results.json`) and the model replies (`sample_data/model_replies.json`), both captured from the real run described in "Status" with `--record sample_data`. What still runs for real: the evaluator, the rejection and retry loop, the evidence branch, memory and the report. A banner states that the run is a replay, and the report carries it too. Prompts are matched to recordings by hash, so the replay only works for this question and these options; anything else stops with an explanation. A fresh clone with no `.env` was checked to replay this run, ending with the same 35 verified claims.
 
+### Run in Docker
+
+The image needs only Docker: it installs Python, Node and the dependencies at build time and defaults to the offline replay.
+
+```bash
+docker build -t device-recall-explainer .
+docker run --rm device-recall-explainer          # replays the recorded run, no keys or services needed
+docker run --rm --env-file .env -e SAMPLE_MODE=false device-recall-explainer "<question>" --playbook   # live run
+docker run --rm --entrypoint python device-recall-explainer -W ignore -m unittest discover -s tests   # tests
+```
+
+The build and the full test suite were run in the container on Python 3.11 (284 tests, live ones skipped); the code is
+also tested locally on Python 3.9. `.env` is never copied into the image (see `.dockerignore`); a live run reads the
+settings from `--env-file`. A live run from the container needs a Zetaris and a Nightshift endpoint it can reach, and on
+Docker Desktop for Mac `localhost` inside the container is the container itself, so point `ZETARIS_REST_URL` and
+`MODEL_BASE_URL` at `host.docker.internal` instead.
+
 To record again from live services: `--record sample_data` on a live run.
 
 ## Agent roles and how they interact
@@ -193,8 +210,24 @@ Register the data (see "Data" above: `.venv/bin/python -m agent.setup_data --ver
 .venv/bin/python -m agent.main "Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?"
 ```
 
-Options: `--memory-dir DIR` (default `.hmem`), `--no-memory`, `--verbose` (show each rejection's detail) and
-`--playbook` (see "Two ways to draft" above). Progress lines go to stderr while it runs. Exit code is 0 for a verified answer.
+Options: `--memory-dir DIR` (default `.hmem`), `--no-memory`, `--verbose` (show each rejection's detail),
+`--playbook` (see "Two ways to draft" above), `--report` (write an HTML report), `--json` (print one JSON document on
+stdout instead of text) and `--timeout SECONDS` (stop the run with no answer after this long; default 600, 0 means no
+limit). Progress lines go to stderr while it runs. Exit code is 0 for a verified answer, 1 for no verified answer and 2
+for a usage or settings problem.
+
+**Programmatic use.** `--json` makes the command line a machine-readable entry point. stdout carries exactly one
+document with `question`, `verified`, `answer`, `rounds`, `claims` (each with its SQL, column and row), `unsupported`,
+`trace`, `receipts`, `tokens`, `observability`, `log` and `report`:
+
+```bash
+SAMPLE_MODE=true .venv/bin/python -m agent.main "<question>" --playbook --json 2>/dev/null | python3 -m json.tool
+```
+
+**Run time.** A playbook run takes minutes, and the model (90 s) and Zetaris (60 s) calls have their own timeouts. The
+run-level limit is checked between rounds and before every model attempt, so a stuck run ends with a clear "time limit"
+and no answer instead of running on. The exploratory mode took about 18 minutes in its recorded run, which the default
+limit would now cut off.
 
 ## Tests
 
