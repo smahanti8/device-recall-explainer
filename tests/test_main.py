@@ -68,7 +68,7 @@ def run(result, memory=None):
         seen["context_fn"] = context_fn
         return "draft_fn"
     returned = ask("why?", memory, make_draft=make_draft, run_investigation=lambda q, d, e: result,
-                   evaluate_fn="evaluate", out=lines.append)
+                   evaluate_fn="evaluate", out=lines.append, progress=lambda message: None)
     return returned, lines, seen
 
 
