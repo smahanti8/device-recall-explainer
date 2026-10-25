@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+.git
+.venv
+.hmem
+**/node_modules
+__pycache__
+*.pyc
+.DS_Store
+logs/run-*
+reports/report-*
+submission
+hello.py
