@@ -236,6 +236,24 @@ limit would now cut off.
 .venv/bin/python -W ignore -m unittest discover -s tests -v
 ```
 
+### Gate evaluation
+
+```bash
+.venv/bin/python -m agent.gate_eval
+```
+
+Runs the deterministic gate (the evaluator, the loop's unclaimed-number and no-claims checks, and the SQL guard) on 18
+fixed drafts, with no model and no network. Result: 11 of 11 bad drafts rejected with the expected reason (every reason
+the gate can give, including a write behind a `WITH`, a read from another schema and an injected instruction with an
+invented figure) and 4 of 4 good drafts accepted. Six of the bad drafts reproduce mistakes the model made in recorded
+runs; the rest are constructed, and each case is labelled. This is a check of the design on a small fixed set, not an
+accuracy rate on real traffic.
+
+It also lists three **known gaps**, drafts the gate accepts by design: a single-digit count in the text that no claim
+backs, a number written as words, and a year no claim backs. A test shows the harness can fail: a mislabelled case is
+reported as missed and the command exits 1. Evidence-completeness (`missing_evidence`) is covered by
+`tests/test_research_branch.py`, not here.
+
 Tests that need live services skip themselves when their settings are missing. The end-to-end
 agent test runs only with `RUN_LIVE_AGENT=1`. Expected values in the Zetaris tests come from direct
 openFDA calls, so a bug in a view cannot hide behind its own output.
