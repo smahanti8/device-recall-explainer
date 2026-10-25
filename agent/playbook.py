@@ -3,7 +3,10 @@
 Each query result becomes a numbered Fact whose label names its scope and whose
 citation is the exact SQL that produced it. The model replies with the fact ids
 it used; claims are built from those facts, so a citation cannot be malformed
-and the evaluator re-checks every number against Zetaris.
+and the evaluator checks every number against the result of its cited SQL.
+
+Evidence branch: a draft that names a drill-down product code without citing its detail is rejected as
+`missing_evidence`; the next draft first fetches that code's facts (the Researcher step), then redrafts.
 
 Every statement references each openfda view at most once (Zetaris fails when the
 same view appears twice in one statement).
@@ -14,14 +17,15 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from agent import llm, tools_zetaris
+from agent import llm, runlog, tools_zetaris
 from agent.drafter import MAX_TOKENS, _context, _opening
-from agent.evaluator import Citation, Claim
+from agent.evaluator import Citation, Claim, Rejection
 from agent.loop import Draft
 
 log = logging.getLogger("agent.playbook")
 
-RECORD_LEVEL_CODES = ("DSY", "DQO", "OEZ")  # product codes with a record-level 2024 view
+RECORD_LEVEL_CODES = ("DSY", "DQO", "OEZ")  # detailed up front
+DRILLDOWN_CODES = RECORD_LEVEL_CODES + ("DQK", "DPT", "DRE", "DWF", "OES", "DYF", "OEQ")  # all have a record-level 2024 view
 _CODE = re.compile(r"^[A-Za-z0-9]{1,6}$")
 
 _FROM = ("FROM openfda.classification_cardiovascular_table c "
@@ -42,6 +46,7 @@ Reply with exactly one JSON object: {"text": "<short explanation>", "facts": ["f
 - For each product code that has events, root-cause and recalling-firm facts, state how many records came from how many events, the top root cause and the top recalling firm. When a code has few events behind many records, say so: the increase is concentrated in a few events.
 - Never write fact ids (like f1) in "text"; they are only for the "facts" list.
 - Describe what the data shows; make no clinical or safety judgments.
+- A rejection with reason "missing_evidence" means you named a product code without its detail: the facts for that code have now been added, so state its records versus events, its top root cause and its top recalling firm.
 - If a previous draft was rejected, fix exactly what was listed and keep the rest."""
 
 
@@ -101,13 +106,38 @@ def collect_facts(run_sql=None, top_codes=None, top_n=5):
         "SELECT ROUND(100.0 * SUM(CASE WHEN rn <= 3 THEN change ELSE 0 END) / SUM(change), 1) AS pct FROM "
         f"(SELECT change, ROW_NUMBER() OVER (ORDER BY change DESC) AS rn FROM ({_CHANGE}) t) u", "pct")
     for code in (c for c in top_codes if str(c).upper() in RECORD_LEVEL_CODES):
-        view = f"openfda.recall_{str(code).lower()}_2024_table"
-        add(f"{code} recall records in 2024", f"SELECT COUNT(*) AS n FROM {view}", "n")
-        add(f"{code} recall events in 2024", f"SELECT COUNT(DISTINCT res_event_number) AS n FROM {view}", "n")
-        add(f"{code} recalling firms in 2024", f"SELECT COUNT(DISTINCT recalling_firm) AS n FROM {view}", "n")
-        for what, column in (("root cause", "root_cause_description"), ("recalling firm", "recalling_firm")):
-            add(f"{code} top {what} in 2024",
-                f"SELECT {column} AS top FROM {view} GROUP BY {column} ORDER BY COUNT(*) DESC LIMIT 1", "top")
+        for label, sql, column in _detail(str(code).upper()):
+            add(label, sql, column)
+    return facts
+
+
+def _detail(code):
+    """The five record-level facts for a product code: (label, sql, column)."""
+    view = f"openfda.recall_{code.lower()}_2024_table"
+    return [
+        (f"{code} recall records in 2024", f"SELECT COUNT(*) AS n FROM {view}", "n"),
+        (f"{code} recall events in 2024", f"SELECT COUNT(DISTINCT res_event_number) AS n FROM {view}", "n"),
+        (f"{code} recalling firms in 2024", f"SELECT COUNT(DISTINCT recalling_firm) AS n FROM {view}", "n"),
+        (f"{code} top root cause in 2024",
+         f"SELECT root_cause_description AS top FROM {view} GROUP BY root_cause_description ORDER BY COUNT(*) DESC LIMIT 1", "top"),
+        (f"{code} top recalling firm in 2024",
+         f"SELECT recalling_firm AS top FROM {view} GROUP BY recalling_firm ORDER BY COUNT(*) DESC LIMIT 1", "top"),
+    ]
+
+
+def collect_code_facts(code, run_sql=None, start_id=1):
+    """Detail facts for one drill-down code, with ids continuing from start_id. ValueError for an unknown code."""
+    if not isinstance(code, str) or code not in DRILLDOWN_CODES:
+        raise ValueError(f"no drill-down for {code!r}")
+    run_sql = run_sql or tools_zetaris.run_sql
+    facts = []
+    for label, sql, column in _detail(code):
+        try:
+            value = _number(run_sql(sql)[0][column])
+        except Exception as error:  # one failed fact must not sink the rest
+            log.warning("fact %r skipped: %s", label, str(error)[:200])
+            continue
+        facts.append(Fact(f"f{start_id + len(facts)}", label, value, Citation(sql, column, 0)))
     return facts
 
 
@@ -152,12 +182,55 @@ def _has_why(items):
     return any(label in item for item in items for label in _WHY_LABELS)
 
 
-def make_playbook_draft_fn(chat=None, run_sql=None, context_fn=None):
+def _requested_codes(feedback):
+    codes = [r.claim.text.split()[0] for r in feedback
+             if r.reason == "missing_evidence" and r.claim.text.endswith(" detail")]
+    return list(dict.fromkeys(codes))
+
+
+def make_playbook_draft_fn(chat=None, run_sql=None, context_fn=None, on_event=None):
     chat = chat or llm.chat
     run_sql = run_sql or tools_zetaris.run_sql
+    fetched = {}      # code -> detail facts fetched on request (kept for later rounds)
+    flagged = set()   # codes already flagged as missing evidence: each is flagged at most once
+
+    def completeness(draft):
+        """Evaluator rule: a named drill-down code with none of its detail cited is missing evidence."""
+        rejections = []
+        for code in DRILLDOWN_CODES:
+            if not re.search(rf"\b{code}\b", draft.text) or code in flagged:
+                continue
+            if any(claim.text.startswith(f"{code} recall events in 2024") for claim in draft.claims):
+                continue
+            flagged.add(code)
+            rejections.append(Rejection(
+                Claim(f"{code} detail", None), "missing_evidence",
+                f"the answer names {code} but cites no records, events, root-cause or recalling-firm facts for it; "
+                "its drill-down will be fetched"))
+        return rejections
+
+    def research(feedback):
+        """Researcher: fetch the detail facts the evaluator said were missing."""
+        for code in _requested_codes(feedback):
+            if code in fetched:
+                continue
+            try:
+                got = collect_code_facts(code, run_sql=run_sql)
+            except ValueError:
+                got = []
+            fetched[code] = got
+            runlog.emit("Researcher", "fetch_facts", input_summary=f"{code} drill-down",
+                        output_summary=f"{len(got)} facts", target_agent="Drafter",
+                        status="success" if got else "error")
+            if on_event:
+                on_event(f"evidence requested: {code} -> {len(got)} facts fetched")
 
     def draft_fn(question, feedback):
+        research(feedback)
         facts = collect_facts(run_sql=run_sql)
+        for got in fetched.values():
+            for fact in got:
+                facts.append(Fact(f"f{len(facts) + 1}", fact.label, fact.value, fact.citation, fact.note))
         by_id = {f.id: f for f in facts}
         opening = _opening(question, feedback, _context(context_fn, question))
         messages = [{"role": "system", "content": SYSTEM},
@@ -184,4 +257,5 @@ def make_playbook_draft_fn(chat=None, run_sql=None, context_fn=None):
             return last
         return last or Draft("(the model did not return the expected JSON)", [])
 
+    draft_fn.completeness = completeness
     return draft_fn

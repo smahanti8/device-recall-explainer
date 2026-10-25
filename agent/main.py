@@ -11,7 +11,7 @@ import sys
 
 from agent import runlog, sample_mode
 from agent.drafter import make_draft_fn
-from agent.evaluator import evaluate, unclaimed_numbers
+from agent.evaluator import Verdict, evaluate, unclaimed_numbers
 from agent.llm import LLMError
 from agent.loop import investigate
 from agent.playbook import make_playbook_draft_fn
@@ -100,7 +100,7 @@ def _ask(question, memory, *, make_draft, make_playbook, run_investigation, eval
                  else "memory: nothing recalled yet")
         return text
 
-    inner = make(context_fn=recalling if memory is not None else None)
+    inner = make(context_fn=recalling if memory is not None else None, **({"on_event": progress} if playbook else {}))
 
     def draft_fn(question, feedback):
         state["round"] += 1
@@ -115,6 +115,10 @@ def _ask(question, memory, *, make_draft, make_playbook, run_investigation, eval
 
     def checked(claims):
         verdict = evaluate_fn(claims)
+        completeness = getattr(inner, "completeness", None)  # playbook mode: is each named code backed by detail?
+        gaps = completeness(state["draft"]) if completeness and state["draft"] else []
+        if gaps:
+            verdict = Verdict(list(verdict.rejections) + gaps)
         reasons = [r.reason for r in verdict.rejections]
         reasons += ["unclaimed_number"] * len(unclaimed_numbers(state["draft"].text, claims))
         outcome = f"{len(reasons)} rejected ({', '.join(reasons)})" if reasons else "all verified"
