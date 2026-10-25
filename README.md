@@ -26,6 +26,7 @@ Rejection reasons go back to the model for another attempt.
 | Memory (H-MEM engine) | Covered by unit tests, the engine's conformance suite and a two-process recall test against the real engine |
 | Model access through Meterless Nightshift | Verified with live calls and saved receipts (`docs/nemotron-evidence.md`) |
 | End-to-end run, playbook mode (`--playbook`) | Run twice with memory. Run 1: 22 claims verified in one round, nothing recalled, `Memory: 22 new, 0 reinforced, 0 changed` (receipt `rcpt_req_sx5b9lbm`). Run 2: 4 hints recalled from run 1 and listed, 22 claims verified in one round, `Memory: 0 new, 22 reinforced, 0 changed` (receipts `rcpt_req_xkqh4x5l`, `rcpt_req_dzso08xp`). Some model replies were served from Nightshift's cache (0.0s), so latencies are not a measure of model speed |
+| End-to-end run with the evidence branch and escalation (`--playbook`, recorded for `SAMPLE_MODE`) | Round 1: 25 claims, 2 rejected as `missing_evidence` (the answer named DQK and DPT without their detail). The researcher fetched both codes' detail from Zetaris (5 facts each), and round 2, redrafted on the larger model, verified all 35 claims. Two model calls (receipts `rcpt_req_dv9gxx4q` on Lightning, `rcpt_req_63urdzfk` on Ultra), 5,078 tokens in and 4,402 out; 36 Zetaris queries fetched and 86 served from the in-run cache; `Memory: 35 new, 0 reinforced, 0 changed`. Log: `logs/sample-run-1.jsonl`; report: `reports/sample-run-1.html` |
 | End-to-end run, exploratory mode (default) | Not completed yet: earlier live runs hit provider timeouts and 502 errors |
 
 <!-- Update the last row once a full run has been recorded. -->
@@ -105,6 +106,18 @@ open reports/report-*.html      # newest file in reports/
 ```
 
 The report is generated from a finished run; it is not a web application and cannot start a run.
+
+### Sample mode: no services needed
+
+`SAMPLE_MODE=true` (or `--sample`) replays a recorded real run, so the agent can be tried without Zetaris, Nightshift or any key:
+
+```bash
+SAMPLE_MODE=true .venv/bin/python -m agent.main "Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?" --playbook --report
+```
+
+What is replayed: the Zetaris results (`sample_data/zetaris_results.json`) and the model replies (`sample_data/model_replies.json`), both captured from the real run described in "Status" with `--record sample_data`. What still runs for real: the evaluator, the rejection and retry loop, the evidence branch, memory and the report. A banner states that the run is a replay, and the report carries it too. Prompts are matched to recordings by hash, so the replay only works for this question and these options; anything else stops with an explanation. A fresh clone with no `.env` was checked to replay this run, ending with the same 35 verified claims.
+
+To record again from live services: `--record sample_data` on a live run.
 
 ## Agent roles and how they interact
 
