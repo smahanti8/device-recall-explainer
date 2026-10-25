@@ -82,8 +82,17 @@ def ask(question, memory=None, *, make_draft=make_draft_fn, make_playbook=make_p
         verbose=False, playbook=False):
     progress = progress or _stderr
     make = make_playbook if playbook else make_draft
-    inner = make(context_fn=memory.context_for if memory is not None else None)
-    state = {"round": 0, "turn": 0, "draft": None}
+    state = {"round": 0, "turn": 0, "draft": None, "hints": []}
+
+    def recalling(question):
+        text = memory.context_for(question)
+        state["hints"] = [line for line in text.splitlines() if line.startswith("- ")]
+        count = len(state["hints"])
+        progress(f"memory: recalled {count} hint{'' if count == 1 else 's'}" if count
+                 else "memory: nothing recalled yet")
+        return text
+
+    inner = make(context_fn=recalling if memory is not None else None)
 
     def draft_fn(question, feedback):
         state["round"] += 1
@@ -113,6 +122,10 @@ def ask(question, memory=None, *, make_draft=make_draft_fn, make_playbook=make_p
 
     with ReceiptCollector(model_turn) as receipts:
         result = run_investigation(question, draft_fn, checked)
+    if state["hints"]:
+        out(f"Recalled from earlier sessions ({len(state['hints'])}):")
+        for hint in state["hints"]:
+            out(f"  {hint}")
     out(format_trace(result, receipts.items, verbose))
     if memory is not None and result.text:
         try:

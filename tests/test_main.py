@@ -13,6 +13,9 @@
     format_trace(result, receipts=(), verbose=False): with verbose=True each round also lists every
         rejection as "reason: detail" (needs the loop's trace entries to carry "details").
     parse_args: --verbose and --playbook are flags (default off).
+    Memory is visible: when the drafter asks memory for hints, ask() reports it. progress gets
+        "memory: recalled K hint(s)" or "memory: nothing recalled yet"; the printed output starts with a
+        "Recalled from earlier sessions (K):" block listing each hint line (once, even over several rounds).
     ask(..., playbook=False, make_playbook=make_playbook_draft_fn): with playbook=True the draft function comes
         from make_playbook(context_fn=...) (code runs the queries, the model explains) instead of make_draft;
         the memory hook, progress lines, trace and learning are identical in both modes.
@@ -193,6 +196,44 @@ class PlaybookMode(unittest.TestCase):
         memory = FakeMemory()
         self.go(playbook=True, memory=memory)
         self.assertEqual(memory.learned, [([CLAIM], [])])
+
+
+class MemoryVisibility(unittest.TestCase):
+    HINTS = ("Previously verified in earlier sessions (hints, not evidence; cite fresh SQL for every number you state):\n"
+             "- DSY recall records in 2024: 54 (source: SELECT 1)\n"
+             "- DQO recall records in 2024: 51 (source: SELECT 2)")
+
+    def go(self, context, rounds=1):
+        progress, lines = [], []
+
+        def make_draft(context_fn=None, **kwargs):
+            def draft_fn(question, feedback):
+                context_fn(question)  # the drafter asks memory once per draft
+                return Draft("a", [CLAIM])
+            return draft_fn
+
+        def loop_like(question, draft_fn, evaluate_fn):
+            for _ in range(rounds):
+                draft_fn(question, [])
+            return GOOD
+        ask("why?", FakeMemory(context=context), make_draft=make_draft, run_investigation=loop_like,
+            evaluate_fn="evaluate", out=lines.append, progress=progress.append)
+        return progress, "\n".join(lines)
+
+    def test_recalled_hints_are_counted_in_the_progress_lines(self):
+        progress, _ = self.go(self.HINTS)
+        self.assertIn("memory: recalled 2 hints", "\n".join(progress))
+
+    def test_an_empty_memory_says_so(self):
+        progress, shown = self.go("")
+        self.assertIn("memory: nothing recalled yet", "\n".join(progress))
+        self.assertNotIn("Recalled from earlier sessions", shown)
+
+    def test_the_output_lists_the_recalled_hints_once(self):
+        _, shown = self.go(self.HINTS, rounds=2)
+        self.assertEqual(shown.count("Recalled from earlier sessions (2):"), 1)
+        self.assertIn("DSY recall records in 2024: 54", shown)
+        self.assertLess(shown.index("Recalled from earlier sessions"), shown.index("Trace"))
 
 
 class Trace(unittest.TestCase):
