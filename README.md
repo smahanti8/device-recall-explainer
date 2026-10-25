@@ -25,7 +25,7 @@ Rejection reasons go back to the model for another attempt.
 | Playbook mode (code runs the verified queries, the model explains) | Covered by unit tests with a scripted model, plus a live check that the fact values match direct openFDA calls (281, 482, +201, DSY 53, DQO 49, OEZ 29, top-3 sum 131, share 65.2%) |
 | Memory (H-MEM engine) | Covered by unit tests, the engine's conformance suite and a two-process recall test against the real engine |
 | Model access through Meterless Nightshift | Verified with live calls and saved receipts (`docs/nemotron-evidence.md`) |
-| End-to-end run, playbook mode (`--playbook`) | Run twice with memory. Run 1: 22 claims verified in one round (1 model call), nothing recalled, 22 claims stored (receipt `rcpt_req_4eyajant`). Run 2: 4 hints recalled from run 1 and listed, 25 claims verified in one round (receipts `rcpt_req_vvdfl9va`, `rcpt_req_w9u17fet`) |
+| End-to-end run, playbook mode (`--playbook`) | Run twice with memory. Run 1: 22 claims verified in one round, nothing recalled, `Memory: 22 new, 0 reinforced, 0 changed` (receipt `rcpt_req_sx5b9lbm`). Run 2: 4 hints recalled from run 1 and listed, 22 claims verified in one round, `Memory: 0 new, 22 reinforced, 0 changed` (receipts `rcpt_req_xkqh4x5l`, `rcpt_req_dzso08xp`). Some model replies were served from Nightshift's cache (0.0s), so latencies are not a measure of model speed |
 | End-to-end run, exploratory mode (default) | Not completed yet: earlier live runs hit provider timeouts and 502 errors |
 
 <!-- Update the last row once a full run has been recorded. -->
@@ -87,11 +87,11 @@ unmodified in `engines/hmem/` (Apache-2.0; see `engines/hmem/NOTICE.md` for the 
 | Step | Code | What happens |
 |---|---|---|
 | Before drafting | `agent/main.py` -> `Memory.context_for(question)` -> drafter's `context_fn` | Verified claims from earlier sessions are recalled and added to the model's first message, labelled "hints, not evidence" |
-| After a verified answer | `agent/main.py` -> `Memory.learn(claims, [])` | Each verified claim is stored with its cited SQL as the record's required `source`, tagged by product code and year, then confirmed with `helpful` feedback |
+| After a verified answer | `agent/main.py` -> `Memory.learn(claims, [])` | Each verified claim is upserted with its cited SQL as the record's required `source`, tagged by product code and year. Same text and value: the existing record is reinforced with `helpful` feedback (no duplicate). New value: a new record supersedes the old one, which is marked `wrong`, and the run prints "changed since last session" |
 | Always | `agent/memory.py` -> `agent/memory_cli.mts` -> `engines/hmem/reference` | A small Node bridge (JSON in, JSON out) calls the engine's `add`, `query` and `feedback` |
 
 **Effect:** a second session recalls what the first one verified (for example "DSY recall records
-in 2024: 54", with its SQL), so the agent starts from known baselines. Recalled hints are never
+in 2024: 54", with its SQL), so the agent starts from known baselines. The run reports the outcome, for example `Memory: 0 new, 22 reinforced, 0 changed`. Recalled hints are never
 evidence: every number in an answer must still cite fresh SQL, which the evaluator re-runs.
 
 **State and audit:** `.hmem/state.json` holds the records and `.hmem/ledger.jsonl` is the engine's
@@ -101,6 +101,7 @@ append-only audit ledger of every add and feedback.
 - the engine's own conformance suite passes 13/13 (`tests/test_memory.py` runs it from this repo)
 - a test stores a claim in one Node process and recalls it from another, with state read from disk
 - a test confirms the ledger records creation and feedback
+- tests confirm that storing the same claim twice keeps one record, and that a changed value supersedes the old one
 
 **See it work:** run the command from "Setup" twice with the same `--memory-dir` (default `.hmem`),
 then look at the "Memory:" line of the first run and the recalled hints sent in the second.
