@@ -138,7 +138,7 @@ class QuestionLength(unittest.TestCase):
         def fake_ask(question, memory, **kwargs):
             called.append(question)
             return type("R", (), {"text": "ok"})()
-        self.assertEqual(main(["x" * 500, "--no-memory"], env=self.FULL, ask_fn=fake_ask), 0)
+        self.assertEqual(main(["recall " + "x" * 493, "--no-memory"], env=self.FULL, ask_fn=fake_ask), 0)
         self.assertEqual(len(called), 1)
 
 

@@ -195,7 +195,7 @@ class MainFlags(SampleCase):
     def test_the_sample_flag_needs_no_settings_and_prints_the_banner(self):
         self.make_sample_dir()
         seen = []
-        code, shown = self.run_main(["why?", "--sample", "--sample-dir", self.dir, "--no-memory"], env={}, seen=seen)
+        code, shown = self.run_main(["why did recalls rise?", "--sample", "--sample-dir", self.dir, "--no-memory"], env={}, seen=seen)
         self.assertEqual((code, seen, sample_mode.mode()), (0, ["replay"], None))
         for needle in ("SAMPLE MODE", "replayed", "recordings", "evaluator"):
             self.assertIn(needle, shown)
@@ -203,29 +203,29 @@ class MainFlags(SampleCase):
     def test_the_environment_variable_works_like_the_flag(self):
         self.make_sample_dir()
         seen = []
-        code, _ = self.run_main(["why?", "--sample-dir", self.dir, "--no-memory"], env={"SAMPLE_MODE": "true"}, seen=seen)
+        code, _ = self.run_main(["why did recalls rise?", "--sample-dir", self.dir, "--no-memory"], env={"SAMPLE_MODE": "true"}, seen=seen)
         self.assertEqual((code, seen), (0, ["replay"]))
 
     def test_the_default_run_is_real(self):
         seen = []
-        code, shown = self.run_main(["why?", "--no-memory"], env=FULL, seen=seen)
+        code, shown = self.run_main(["why did recalls rise?", "--no-memory"], env=FULL, seen=seen)
         self.assertEqual((code, seen), (0, [None]))
         self.assertNotIn("SAMPLE MODE", shown)
 
     def test_record_mode_is_on_during_the_run_and_files_are_written_at_the_end(self):
         seen = []
-        code, _ = self.run_main(["why?", "--no-memory", "--record", self.dir], env=FULL, seen=seen)
+        code, _ = self.run_main(["why did recalls rise?", "--no-memory", "--record", self.dir], env=FULL, seen=seen)
         self.assertEqual((code, seen, sample_mode.mode()), (0, ["record"], None))
         self.assertTrue(os.path.exists(os.path.join(self.dir, "zetaris_results.json")))
         self.assertTrue(os.path.exists(os.path.join(self.dir, "model_replies.json")))
 
     def test_sample_and_record_together_are_refused(self):
-        code, shown = self.run_main(["why?", "--sample", "--record", self.dir], env=FULL)
+        code, shown = self.run_main(["why did recalls rise?", "--sample", "--record", self.dir], env=FULL)
         self.assertEqual(code, 2)
         self.assertIn("--record", shown)
 
     def test_missing_sample_data_exits_2_with_a_clear_message(self):
-        code, shown = self.run_main(["why?", "--sample", "--sample-dir", os.path.join(self.dir, "nope")], env={})
+        code, shown = self.run_main(["why did recalls rise?", "--sample", "--sample-dir", os.path.join(self.dir, "nope")], env={})
         self.assertEqual((code, sample_mode.mode()), (2, None))
         self.assertIn("sample data", shown)
 
@@ -236,7 +236,7 @@ class MainFlags(SampleCase):
             raise SampleModeError("no recording for this SQL; record it with --record")
         errors = io.StringIO()
         with contextlib.redirect_stderr(errors):
-            code = main(["why?", "--sample", "--sample-dir", self.dir, "--no-memory"], env={}, ask_fn=unrecorded)
+            code = main(["why did recalls rise?", "--sample", "--sample-dir", self.dir, "--no-memory"], env={}, ask_fn=unrecorded)
         self.assertEqual((code, sample_mode.mode()), (2, None))
         self.assertIn("no recording", errors.getvalue())
 

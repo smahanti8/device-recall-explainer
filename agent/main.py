@@ -21,6 +21,7 @@ from agent import report as run_report
 from agent import tools_zetaris
 from agent.runlog import RunLog
 from agent.sample_mode import SampleModeError
+from agent.scope import scope_problem
 from agent.memory import Memory
 
 REQUIRED_SETTINGS = ("ZETARIS_REST_URL", "ZETARIS_ORG_ID", "ZETARIS_API_KEY",
@@ -301,11 +302,30 @@ BANNER = ("SAMPLE MODE: Zetaris results and the model reply are replayed from re
           "the evaluator, retry loop and memory run for real. Run without --sample for a live run.")
 
 
+def _refuse(args, problem):
+    """An out-of-scope question: say so, log it, and run nothing."""
+    print(f"Out of scope: {problem}", file=sys.stderr)
+    if args.as_json:
+        print(json.dumps({"question": args.question, "verified": False, "reason": "out_of_scope", "message": problem}))
+    if not args.no_log:
+        log = RunLog(args.log_dir)
+        runlog.start(log)
+        try:
+            runlog.emit("Orchestrator", "scope_check", input_summary=args.question, output_summary=problem,
+                        status="refused")
+        finally:
+            runlog.stop()
+    return 2
+
+
 def main(argv=None, env=None, ask_fn=None):
     args = parse_args(argv)
     if len(args.question) > MAX_QUESTION:
         print(f"The question is too long ({len(args.question)} characters; the limit is {MAX_QUESTION}).", file=sys.stderr)
         return 2
+    problem = scope_problem(args.question)
+    if problem:
+        return _refuse(args, problem)
     env_map = os.environ if env is None else env
     sample = args.sample or sample_mode.enabled(env_map)
     if sample and args.record:

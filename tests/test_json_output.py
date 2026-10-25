@@ -89,11 +89,11 @@ class InTheCommandLine(unittest.TestCase):
         return code, seen
 
     def test_the_flag_is_passed_on(self):
-        code, seen = self.passed(["why?", "--no-memory", "--json"])
+        code, seen = self.passed(["why did recalls rise?", "--no-memory", "--json"])
         self.assertEqual((code, seen["as_json"]), (0, True))
 
     def test_the_default_is_text(self):
-        self.assertFalse(self.passed(["why?", "--no-memory"])[1]["as_json"])
+        self.assertFalse(self.passed(["why did recalls rise?", "--no-memory"])[1]["as_json"])
 
 
 if __name__ == "__main__":

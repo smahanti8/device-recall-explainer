@@ -259,9 +259,9 @@ class Cli(unittest.TestCase):
         def fake_ask(question, memory, **kwargs):
             seen.append(kwargs.get("report_dir"))
             return Result("ok", [], 1, [], claims=[])
-        main(["why?", "--no-memory"], env=FULL, ask_fn=fake_ask)
-        main(["why?", "--no-memory", "--report"], env=FULL, ask_fn=fake_ask)
-        main(["why?", "--no-memory", "--report", "--report-dir", "/tmp/r"], env=FULL, ask_fn=fake_ask)
+        main(["why did recalls rise?", "--no-memory"], env=FULL, ask_fn=fake_ask)
+        main(["why did recalls rise?", "--no-memory", "--report"], env=FULL, ask_fn=fake_ask)
+        main(["why did recalls rise?", "--no-memory", "--report", "--report-dir", "/tmp/r"], env=FULL, ask_fn=fake_ask)
         self.assertEqual(seen, [None, "reports", "/tmp/r"])
 
 

@@ -45,7 +45,7 @@ class Main(unittest.TestCase):
     def test_a_missing_setting_stops_with_a_friendly_message_before_any_work(self):
         errors = io.StringIO()
         with contextlib.redirect_stderr(errors):
-            code = main(["why?"], env={"ZETARIS_REST_URL": "x"}, ask_fn=never_called)
+            code = main(["why did recalls rise?"], env={"ZETARIS_REST_URL": "x"}, ask_fn=never_called)
         shown = errors.getvalue()
         self.assertEqual(code, 2)
         for needle in ("MODEL_BASE_URL", "NEMOTRON_MODEL", ".env.example"):
@@ -59,14 +59,14 @@ class Main(unittest.TestCase):
         def fake_ask(question, memory, **kwargs):
             calls.append((question, memory, kwargs))
             return Result("ok", [], 1, [], claims=[])
-        self.assertEqual(main(["why?", "--no-memory", "--playbook"], env=FULL, ask_fn=fake_ask), 0)
+        self.assertEqual(main(["why did recalls rise?", "--no-memory", "--playbook"], env=FULL, ask_fn=fake_ask), 0)
         question, memory, kwargs = calls[0]
-        self.assertEqual((question, memory), ("why?", None))
+        self.assertEqual((question, memory), ("why did recalls rise?", None))
         self.assertTrue(kwargs["playbook"])
 
     def test_an_answer_that_could_not_be_verified_exits_1(self):
         gave_up = lambda question, memory, **kwargs: Result(None, [], 3, [])
-        self.assertEqual(main(["why?", "--no-memory"], env=FULL, ask_fn=gave_up), 1)
+        self.assertEqual(main(["why did recalls rise?", "--no-memory"], env=FULL, ask_fn=gave_up), 1)
 
     def test_help_needs_no_settings(self):
         with contextlib.redirect_stdout(io.StringIO()), self.assertRaises(SystemExit) as stopped:

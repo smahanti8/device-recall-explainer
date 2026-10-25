@@ -286,9 +286,9 @@ class Cli(unittest.TestCase):
         def fake_ask(question, memory, **kwargs):
             seen.append(kwargs["log_dir"])
             return GOOD
-        main(["why?", "--no-memory"], env=FULL, ask_fn=fake_ask)
-        main(["why?", "--no-memory", "--no-log"], env=FULL, ask_fn=fake_ask)
-        main(["why?", "--no-memory", "--log-dir", "/tmp/x"], env=FULL, ask_fn=fake_ask)
+        main(["why did recalls rise?", "--no-memory"], env=FULL, ask_fn=fake_ask)
+        main(["why did recalls rise?", "--no-memory", "--no-log"], env=FULL, ask_fn=fake_ask)
+        main(["why did recalls rise?", "--no-memory", "--log-dir", "/tmp/x"], env=FULL, ask_fn=fake_ask)
         self.assertEqual(seen, ["logs", None, "/tmp/x"])
 
 
@@ -316,6 +316,9 @@ class ShippedSampleLogs(unittest.TestCase):
                 for event in events:
                     self.assertTrue(FIELDS <= set(event), event)
                 actions = [e["action"] for e in events]
+                if actions == ["scope_check"]:  # a refusal: nothing ran, so there is no run or model call to check
+                    self.assertEqual(events[0]["status"], "refused")
+                    continue
                 self.assertEqual(actions[0], "run_start")
                 self.assertIn("run_end", actions)  # memory events can follow it
                 self.assertFalse(events[0]["sample_mode"])

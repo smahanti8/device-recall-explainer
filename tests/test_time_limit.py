@@ -111,11 +111,11 @@ class InTheCommandLine(unittest.TestCase):
         return seen["timeout"]
 
     def test_the_default_is_600_seconds(self):
-        self.assertEqual(self.passed_timeout(["why?", "--no-memory"]), 600)
+        self.assertEqual(self.passed_timeout(["why did recalls rise?", "--no-memory"]), 600)
 
     def test_it_can_be_changed_or_turned_off(self):
-        self.assertEqual(self.passed_timeout(["why?", "--no-memory", "--timeout", "30"]), 30)
-        self.assertEqual(self.passed_timeout(["why?", "--no-memory", "--timeout", "0"]), 0)
+        self.assertEqual(self.passed_timeout(["why did recalls rise?", "--no-memory", "--timeout", "30"]), 30)
+        self.assertEqual(self.passed_timeout(["why did recalls rise?", "--no-memory", "--timeout", "0"]), 0)
 
     def test_ask_runs_with_the_limit_and_clears_it_afterwards(self):
         seen = []
