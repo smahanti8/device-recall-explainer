@@ -10,7 +10,7 @@ import os
 import re
 import sys
 
-from agent import runlog, sample_mode
+from agent import llm, observability, runlog, sample_mode
 from agent.drafter import make_draft_fn
 from agent.evaluator import Verdict, evaluate, unclaimed_numbers
 from agent.llm import LLMError
@@ -143,6 +143,7 @@ def _ask(question, memory, *, make_draft, make_playbook, run_investigation, eval
     state = {"round": 0, "turn": 0, "draft": None, "hints": []}
     memory_line = None
     tools_zetaris.clear_query_log()
+    llm.clear_call_log()
     runlog.emit("Orchestrator", "run_start", input_summary=question, question=question, playbook=playbook,
                 memory=memory is not None, sample_mode=sample_mode.mode() == "replay",
                 recording=sample_mode.mode() == "record")
@@ -203,6 +204,9 @@ def _ask(question, memory, *, make_draft, make_playbook, run_investigation, eval
         for hint in state["hints"]:
             out(f"  {hint}")
     out(format_trace(result, receipts.items, verbose, tokens=receipts.tokens))
+    summary = observability.summarize(queries, llm.call_log())
+    if observability.format_line(summary):
+        out(observability.format_line(summary))
     if memory is not None and result.text:
         try:
             ids = memory.learn(result.claims, [])
@@ -223,6 +227,7 @@ def _ask(question, memory, *, make_draft, make_playbook, run_investigation, eval
     if report_dir:
         data = _report_data(result, question, state, receipts, queries, timeline, memory_line,
                             run_sql or tools_zetaris.peek, now)
+        data["observability"] = summary
         path = run_report.write(data, report_dir, now=now)
         out(f"Report: {path}" if path else f"note: could not write the report (nothing could be written to {report_dir})")
     return result

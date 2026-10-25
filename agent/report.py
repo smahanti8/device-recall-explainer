@@ -8,6 +8,8 @@ import html
 import os
 import re
 
+from agent import observability
+
 _CSS = """
 :root{--ink:#2B2F33;--panel:#F3F3F1;--coral:#EE5A4A;--green:#3A9E76;--grey:#6F767D;--line:#DADBDC}
 *{box-sizing:border-box}body{margin:0;font:16px/1.55 Arial,Helvetica,sans-serif;color:var(--ink);background:#fff}
@@ -97,6 +99,13 @@ def _queries(queries):
             f"<th>Rows</th></tr>{rows}</table></details>") if queries else "<p>No Zetaris queries were recorded.</p>"
 
 
+def _observability(summary):
+    found = observability.parts(summary) if summary else []
+    if not found:
+        return ""
+    return "<h2>Observability</h2><ul>" + "".join(f"<li>{_e(part)}</li>" for part in found) + "</ul>"
+
+
 def render(data):
     claims = data.get("claims") or []
     tokens = data.get("tokens") or {}
@@ -133,6 +142,7 @@ def render(data):
 <h2>Model calls</h2>
 <ul>{receipts or "<li>No model calls were recorded.</li>"}</ul>
 <p>{_e(token_line)}</p>
+{_observability(data.get("observability"))}
 <h2>Memory</h2>
 {"<p>Recalled hints (not evidence):</p><ul>" + hints + "</ul>" if hints else "<p>Nothing was recalled.</p>"}
 <p>{_e(data.get("memory") or "")}</p>
