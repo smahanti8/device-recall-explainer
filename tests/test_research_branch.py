@@ -179,6 +179,13 @@ class ResearchOnFeedback(unittest.TestCase):
     def test_the_system_prompt_explains_missing_evidence(self):
         self.assertIn("missing_evidence", playbook.SYSTEM)
 
+    def test_the_prompt_does_not_invite_characterising_the_records_to_events_ratio(self):
+        """A live run wrote "43 records across 21 events, reflecting many events per record", which is wrong prose
+        the number checks cannot catch. The prompt must not invite such descriptions."""
+        self.assertNotIn("few events", playbook.SYSTEM)
+        self.assertIn("only when its events fact equals 1", playbook.SYSTEM)
+        self.assertIn("do not describe the ratio", playbook.SYSTEM)
+
 
 class InTheLoop(unittest.TestCase):
     """The whole interaction through the real loop: reject, research, redraft, verify."""

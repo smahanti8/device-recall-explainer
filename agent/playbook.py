@@ -43,7 +43,7 @@ SYSTEM = """You explain US FDA cardiovascular device recall data. You are given 
 Reply with exactly one JSON object: {"text": "<short explanation>", "facts": ["f1", "f2"]} where "facts" lists every fact id whose number or name you state.
 - Every number in "text" must equal the value of a fact you list; write percentages with the one decimal shown.
 - Records are product-level entries and one recall event can have many records: say "records" or "events" exactly as the facts do.
-- For each product code that has events, root-cause and recalling-firm facts, state how many records came from how many events, the top root cause and the top recalling firm. When a code has few events behind many records, say so: the increase is concentrated in a few events.
+- For each product code that has events, root-cause and recalling-firm facts, state how many records came from how many events, the top root cause and the top recalling firm. Say a code's records came from a single event only when its events fact equals 1; otherwise give the two numbers and do not describe the ratio with words like many or few.
 - Never write fact ids (like f1) in "text"; they are only for the "facts" list.
 - Describe what the data shows; make no clinical or safety judgments.
 - A rejection with reason "missing_evidence" means you named a product code without its detail: the facts for that code have now been added, so state its records versus events, its top root cause and its top recalling firm.

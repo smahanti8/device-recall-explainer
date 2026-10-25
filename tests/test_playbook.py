@@ -172,7 +172,7 @@ class PlaybookWhy(unittest.TestCase):
         chat = scripted(reply("ok", self.basic + self.why))
         self.draft(chat)
         system = chat.calls[0][0]["content"].lower()
-        for needle in ("each product code", "events", "root cause", "recalling firm", "few events"):
+        for needle in ("each product code", "events", "root cause", "recalling firm", "single event"):
             self.assertIn(needle, system)
 
     def test_an_answer_without_the_why_facts_gets_one_correction(self):
