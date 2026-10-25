@@ -134,9 +134,18 @@ _WHY_PROMPT = ("Your answer cites no recall-event or root-cause fact. For each p
 _JSON_PROMPT = 'Reply with ONE JSON object only: {"text": "...", "facts": ["f1"]}.'
 
 
+_BRACKET_GROUP = re.compile(r"[(\[][^()\[\]]*[)\]]")
+
+
+def _trim_ids_in_group(match):
+    """Inside one bracket, drop ids that sit beside other items: "(+53, f4)" -> "(+53)"."""
+    group = re.sub(r"\s*[,;]\s*f\d+\b", "", match.group(0))
+    return re.sub(r"\bf\d+\s*[,;]\s*", "", group)
+
+
 def _without_fact_ids(text):
-    """Ids like "(f1)" or "[f2, f3]" are for the claims list, not for readers."""
-    return _FACT_MARKER.sub("", text)
+    """Ids like "(f1)", "[f2, f3]" or "(+53, f4)" are for the claims list, not for readers."""
+    return _BRACKET_GROUP.sub(_trim_ids_in_group, _FACT_MARKER.sub("", text))
 
 
 def _has_why(items):

@@ -220,6 +220,20 @@ class FactIdMarkers(unittest.TestCase):
         text = "Class 2 devices, the f-series and a 5f2 ratio are left alone."
         self.assertEqual(self.answer(text)[0].text, text)
 
+    def test_ids_inside_mixed_parentheses_are_removed(self):
+        for raw, expected in (
+            ("DSY rose (+53, f4) and DQO (+49, f5).", "DSY rose (+53) and DQO (+49)."),
+            ("DSY rose (f4, +53).", "DSY rose (+53)."),
+            ("Up (+53, f4, f5) overall.", "Up (+53) overall."),
+            ("Share 65.2% (about two thirds; f10).", "Share 65.2% (about two thirds)."),
+        ):
+            with self.subTest(raw=raw):
+                self.assertEqual(self.answer(raw)[0].text, expected)
+
+    def test_look_alikes_inside_parentheses_are_left_alone(self):
+        text = "Models (f-series, 5f2 ratio, F4) are left alone."
+        self.assertEqual(self.answer(text)[0].text, text)
+
     def test_removing_markers_does_not_hide_an_unclaimed_number(self):
         run = fresh_run()
         facts = collect_facts(run_sql=run)
