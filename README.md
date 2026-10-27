@@ -341,9 +341,26 @@ smoke_test.py checks Zetaris and the model route from .env
 
 ## Sponsor technology
 
-- **Zetaris:** serves the openFDA data as SQL tables; the agent's only data access is read-only SQL through its REST API.
-- **Meterless:** Nightshift is the model provider (routing receipts recorded per call); H-MEM provides memory across sessions.
-- **NVIDIA:** a Nemotron model (default `nvidia/nemotron-3.5-lightning-30b-a3b`) answers the agent's turns; receipts in `docs/nemotron-evidence.md` show which model was routed to.
+**Zetaris (data layer).** Public openFDA recall, classification and root-cause data are registered as Zetaris REST tables
+and views (`sql/`). The agent's only data access is guarded, read-only SQL through Zetaris's REST API: one `SELECT` per
+call, `openfda` tables only, checked before any request is sent. Every number cites the exact query and cell, so it can be
+checked.
+
+**Meterless.** *Nightshift* is the model provider: every call goes through one shared client (`agent/llm.py`) pointed at its
+OpenAI-compatible endpoint by `MODEL_BASE_URL` and `MODEL_API_KEY`, and each response carries a receipt (`routed_model`,
+`receipt_id`). One engine is implemented, *H-MEM* (persistent memory), vendored unmodified in `engines/hmem/`: verified
+claims are recalled as hints (never evidence) before drafting and stored with their cited SQL afterwards, a repeated claim is
+reinforced, a changed value supersedes the old record and is reported, and every write is in the audit ledger. The test
+showing it works is `tests/test_memory.py` (the engine's 13-check conformance suite, recall across two processes,
+reinforcement, supersession and the ledger): `.venv/bin/python -W ignore -m unittest tests.test_memory`.
+
+**NVIDIA.** Nemotron 3.5 Lightning (`nvidia/nemotron-3.5-lightning-30b-a3b`) writes the explanations, and Nemotron 3 Ultra
+(`nvidia/nemotron-3-ultra-550b-a55b`) redrafts after a rejection, both through Nightshift. Receipts in
+`docs/nemotron-evidence.md` show which model answered.
+
+**What is unique.** Zetaris is the proof as well as the data: the evaluator re-reads each claim's cited SQL against Zetaris.
+H-MEM keeps verified claims with their SQL as the source and never lets memory stand in for evidence. Nightshift receipts show
+which Nemotron model answered, and the larger model is used only after a rejection.
 
 ## Pre-existing components
 
