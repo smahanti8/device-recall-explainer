@@ -8,6 +8,8 @@ and refuses to state any number it cannot trace to a query.
 Example question: *Why did cardiovascular device recall records rise between 2023 and 2024,
 and which product codes drove it?*
 
+![Architecture: a question passes the scope check and memory recall; the drafter's claims are checked by the evaluator against Zetaris; a rejection goes back for a redraft, and nothing unverified is ever shown](docs/architecture.svg)
+
 ## Why this matters
 
 A recall is the FDA's signal that a device already in use may hurt people. A Class I recall means a reasonable probability
@@ -71,9 +73,7 @@ image (Debian, Python 3.11, Node.js 22). Windows was not tested.
 
 ## How it works
 
-![Architecture: a question passes the scope check and memory recall; the drafter's claims are checked by the evaluator against Zetaris; a rejection goes back for a redraft, and nothing unverified is ever shown](docs/architecture.svg)
-
-Every number in an answer is a claim that cites a cell of a SQL result, and the evaluator (plain code, not the model)
+The diagram at the top of this page shows the flow. Every number in an answer is a claim that cites a cell of a SQL result, and the evaluator (plain code, not the model)
 re-reads that result before the answer is shown. In playbook mode (`--playbook`) code runs the fixed queries and the
 model explains numbered facts; in the default exploratory mode the model writes its own SQL (see "Two ways to draft").
 
