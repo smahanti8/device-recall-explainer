@@ -8,6 +8,24 @@ and refuses to state any number it cannot trace to a query.
 Example question: *Why did cardiovascular device recall records rise between 2023 and 2024,
 and which product codes drove it?*
 
+## Why this matters
+
+A recall is the FDA's signal that a device already in use may hurt people. A Class I recall means a reasonable probability
+that using the product will cause serious adverse health consequences or death
+([FDA](https://www.fda.gov/safety/industry-guidance-recalls/recalls-background-and-definitions)). Between January 2018 and
+June 2022, 13,623 medical devices were recalled in 5,035 recall events, 271 of them Class I; in a published review of 189
+Class I recalls of moderate- and high-risk devices, 30 (15.8%) had at least one patient death associated with the device
+and 24 (12.7%) had ten or more reported injuries, and about a third did not report deaths or injuries at all
+([Mooghali et al., *Medical Devices*, 2023](https://pmc.ncbi.nlm.nih.gov/articles/PMC10204764/)). "Associated with" is the
+paper's wording: it does not say the device caused the death.
+
+The hard part for the people who review recalls is not finding a count. It is knowing what a count means. In this
+agent's own data, cardiovascular recall records rose from 281 in 2023 to 482 in 2024, and one product code alone accounted
+for 54 of the 2024 records. They were a single recall event from a single firm. Read as "recalls surged", that number
+sends a reviewer to the wrong place. This agent answers "why did this change?" and shows its work: every number links to
+the SQL result behind it, and an answer it cannot verify is never printed. It describes public data and is not medical or
+regulatory advice.
+
 **Product codes.** The FDA gives each type of medical device a three-letter product code in its classification
 database, for example DSY (vascular graft prosthesis), DQO (diagnostic intravascular catheter) or OEZ (cardiovascular
 procedure kit). The codes are read letter by letter, not as words. The agent groups recall records by product code to see
