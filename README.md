@@ -1,7 +1,8 @@
-# Device Recall Explainer
+# RecallWise: The Device Recall Explainer
 
-An agent that answers "why did this change?" questions about FDA medical device recalls,
-and refuses to state any number it cannot trace to a query.
+RecallWise is an agent that answers "why did this change?" questions about FDA medical device recalls,
+and refuses to state any number it cannot trace to a query. (The repository and the command-line program keep
+the name `device-recall-explainer`.)
 
 **[▶ Replay demo](https://smahanti8.github.io/device-recall-explainer/)** (recorded runs, nothing runs live) &nbsp;·&nbsp; [Try it](#try-it) &nbsp;·&nbsp; [Architecture](#how-it-works) &nbsp;·&nbsp; [Sample report](reports/sample-run-1.html)
 
