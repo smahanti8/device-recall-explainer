@@ -1,0 +1,419 @@
+{
+ "runs": [
+  {
+   "id": "sample-run-1",
+   "title": "Why did recalls rise?",
+   "question": "Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?",
+   "mode": "playbook",
+   "verified": true,
+   "refused": false,
+   "answer": "Cardiovascular device recall records rose from 281 in 2023 to 482 in 2024, an increase of 201 records. The three product codes with the largest increases — DSY, DQO, and OEZ — together added 131 records, accounting for 65.2% of the total rise. DSY contributed 53 records from a single event, with the top root cause Equipment maintenance and the top recalling firm Atrium Medical Corporation. DQO contributed 49 records from 3 events involving 3 firms, with the top root cause Under Investigation by firm and the top recalling firm Boston Scientific Corporation. OEZ contributed 29 records from 21 events involving 6 firms, with the top root cause Process control and the top recalling firm MEDLINE INDUSTRIES, LP - Northfield. Additional increases came from DQK, which added 25 records from 4 events involving 4 firms, with the top root cause Under Investigation by firm and the top recalling firm Boston Scientific Corporation, and DPT, which added 22 records from a single event, with the top root cause Process control and the top recalling firm Smiths Medical ASD, Inc.",
+   "message": null,
+   "report": "reports/sample-run-1.html",
+   "steps": [
+    {
+     "kind": "question",
+     "text": "Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?",
+     "tone": ""
+    },
+    {
+     "kind": "round",
+     "text": "round 1: drafting",
+     "tone": ""
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 26 queries fetched",
+     "tone": "dim"
+    },
+    {
+     "kind": "memory",
+     "text": "memory: nothing recalled yet",
+     "tone": "dim"
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_dv9gxx4q)",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 25 served from cache",
+     "tone": "dim"
+    },
+    {
+     "kind": "check",
+     "text": "round 1: 2 rejected (missing_evidence, missing_evidence)",
+     "tone": "bad"
+    },
+    {
+     "kind": "round",
+     "text": "round 2: drafting",
+     "tone": ""
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 5 queries fetched",
+     "tone": "dim"
+    },
+    {
+     "kind": "research",
+     "text": "research: fetched 5 facts from Zetaris",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 5 queries fetched",
+     "tone": "dim"
+    },
+    {
+     "kind": "research",
+     "text": "research: fetched 5 facts from Zetaris",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 26 served from cache",
+     "tone": "dim"
+    },
+    {
+     "kind": "memory",
+     "text": "memory: nothing recalled yet",
+     "tone": "dim"
+    },
+    {
+     "kind": "escalate",
+     "text": "escalating to nvidia/nemotron-3-ultra-550b-a55b for the redraft",
+     "tone": "dim"
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3-ultra-550b-a55b (rcpt_req_63urdzfk)",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 35 served from cache",
+     "tone": "dim"
+    },
+    {
+     "kind": "check",
+     "text": "round 2: all verified",
+     "tone": "good"
+    },
+    {
+     "kind": "end",
+     "text": "finished: 2 round(s), verified answer",
+     "tone": "good"
+    },
+    {
+     "kind": "memory",
+     "text": "memory: 35 new, 0 reinforced, 0 changed",
+     "tone": "dim"
+    }
+   ],
+   "queries": {
+    "fetched": 36,
+    "cached": 86,
+    "failed": 0
+   }
+  },
+  {
+   "id": "sample-run-2",
+   "title": "Top three product codes",
+   "question": "Which three product codes drove the increase in cardiovascular device recalls from 2023 to 2024, and what share of the increase do they account for?",
+   "mode": "playbook",
+   "verified": true,
+   "refused": false,
+   "answer": "Cardiovascular device recall records rose from 281 in 2023 to 482 in 2024, an increase of 201 records. The top three product codes — DSY, DQO, and OEZ — together added 131 records, accounting for 65.2% of the total increase. DSY contributed 53 recall‑record increase from a single event; its 2024 total was 54 records, the top root cause was Equipment maintenance and the top recalling firm was Atrium Medical Corporation. DQO contributed 49 recall‑record increase from 3 events; its 2024 total was 51 records, the top root cause was Under Investigation by firm and the top recalling firm was Boston Scientific Corporation. OEZ contributed 29 recall‑record increase from 21 events; its 2024 total was 43 records, the top root cause was Process control and the top recalling firm was MEDLINE INDUSTRIES, LP - Northfield.",
+   "message": null,
+   "report": "reports/sample-run-2.html",
+   "steps": [
+    {
+     "kind": "question",
+     "text": "Which three product codes drove the increase in cardiovascular device recalls from 2023 to 2024, and what share of the increase do they account for?",
+     "tone": ""
+    },
+    {
+     "kind": "round",
+     "text": "round 1: drafting",
+     "tone": ""
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 26 queries fetched",
+     "tone": "dim"
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_lvbucqnr)",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 20 served from cache",
+     "tone": "dim"
+    },
+    {
+     "kind": "check",
+     "text": "round 1: all verified",
+     "tone": "good"
+    },
+    {
+     "kind": "end",
+     "text": "finished: 1 round(s), verified answer",
+     "tone": "good"
+    }
+   ],
+   "queries": {
+    "fetched": 26,
+    "cached": 20,
+    "failed": 0
+   }
+  },
+  {
+   "id": "sample-run-3",
+   "title": "One product code: DSY",
+   "question": "For product code DSY, how many 2024 recall records were there, how many distinct recall events and firms, and what was the top root cause?",
+   "mode": "playbook",
+   "verified": true,
+   "refused": false,
+   "answer": "DSY had 54 recall records in 2024 from 1 event involving 1 firm, with the top root cause Equipment maintenance.",
+   "message": null,
+   "report": "reports/sample-run-3.html",
+   "steps": [
+    {
+     "kind": "question",
+     "text": "For product code DSY, how many 2024 recall records were there, how many distinct recall events and firms, and what was the top root cause?",
+     "tone": ""
+    },
+    {
+     "kind": "round",
+     "text": "round 1: drafting",
+     "tone": ""
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 26 queries fetched",
+     "tone": "dim"
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_2r7axh4v)",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 4 served from cache",
+     "tone": "dim"
+    },
+    {
+     "kind": "check",
+     "text": "round 1: all verified",
+     "tone": "good"
+    },
+    {
+     "kind": "end",
+     "text": "finished: 1 round(s), verified answer",
+     "tone": "good"
+    }
+   ],
+   "queries": {
+    "fetched": 26,
+    "cached": 4,
+    "failed": 0
+   }
+  },
+  {
+   "id": "sample-exploratory-run-1",
+   "title": "Same question, exploratory mode",
+   "question": "Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?",
+   "mode": "exploratory",
+   "verified": false,
+   "refused": false,
+   "answer": null,
+   "message": null,
+   "report": "reports/sample-exploratory-run-1.html",
+   "steps": [
+    {
+     "kind": "question",
+     "text": "Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?",
+     "tone": ""
+    },
+    {
+     "kind": "round",
+     "text": "round 1: drafting",
+     "tone": ""
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_9rsd4u40)",
+     "tone": "dim"
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_bdivv8rq)",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 1 queries fetched",
+     "tone": "dim"
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_mupwtpry)",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 1 queries fetched",
+     "tone": "dim"
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_z9374tgb)",
+     "tone": "dim"
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_00w4jv9t)",
+     "tone": "dim"
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_qp79mns2), after 3 provider retries",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 6 queries fetched, 2 failed",
+     "tone": "dim"
+    },
+    {
+     "kind": "check",
+     "text": "round 1: 3 rejected (sql_failed, sql_failed, scope_mismatch)",
+     "tone": "bad"
+    },
+    {
+     "kind": "round",
+     "text": "round 2: drafting",
+     "tone": ""
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_w3g2pdqn)",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 1 failed",
+     "tone": "dim"
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_vthwv528)",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 1 queries fetched",
+     "tone": "dim"
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_82yjjt6m)",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 1 queries fetched",
+     "tone": "dim"
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_1i3dlyv2)",
+     "tone": "dim"
+    },
+    {
+     "kind": "model",
+     "text": "model call failed after 5 attempts (provider error)",
+     "tone": "bad"
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_txbbgufv), after 1 provider retries",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 15 queries fetched",
+     "tone": "dim"
+    },
+    {
+     "kind": "check",
+     "text": "round 2: 1 rejected (value_mismatch)",
+     "tone": "bad"
+    },
+    {
+     "kind": "round",
+     "text": "round 3: drafting",
+     "tone": ""
+    },
+    {
+     "kind": "model",
+     "text": "model call: nvidia/nemotron-3.5-lightning-30b-a3b (rcpt_req_67dh6cl4)",
+     "tone": "dim"
+    },
+    {
+     "kind": "zetaris",
+     "text": "Zetaris: 24 queries fetched, 1 failed",
+     "tone": "dim"
+    },
+    {
+     "kind": "check",
+     "text": "round 3: 4 rejected (sql_failed, unclaimed_number, unclaimed_number, unclaimed_number)",
+     "tone": "bad"
+    },
+    {
+     "kind": "end",
+     "text": "finished: 3 round(s), no verified answer: every draft was rejected",
+     "tone": "bad"
+    }
+   ],
+   "queries": {
+    "fetched": 49,
+    "cached": 0,
+    "failed": 4
+   }
+  },
+  {
+   "id": "sample-refusal-1",
+   "title": "A question about something else",
+   "question": "What is the capital of France?",
+   "mode": "refused",
+   "verified": false,
+   "refused": true,
+   "answer": null,
+   "message": "Out of scope: This agent answers questions about FDA cardiovascular device recalls in 2023 and 2024 (recall records and events, product codes, root causes, recalling firms). Try, for example: Why did cardiovascular device recall records rise between 2023 and 2024?",
+   "report": null,
+   "steps": [
+    {
+     "kind": "question",
+     "text": "What is the capital of France?",
+     "tone": ""
+    },
+    {
+     "kind": "refused",
+     "text": "Out of scope: This agent answers questions about FDA cardiovascular device recalls in 2023 and 2024 (recall records and events, product codes, root causes, recalling firms). Try, for example: Why did cardiovascular device recall records rise between 2023 and 2024?",
+     "tone": "bad"
+    }
+   ],
+   "queries": {
+    "fetched": 0,
+    "cached": 0,
+    "failed": 0
+   }
+  }
+ ]
+}
