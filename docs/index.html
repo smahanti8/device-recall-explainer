@@ -20,7 +20,9 @@ header.top .wrap{padding-top:14px;padding-bottom:14px;display:flex;flex-wrap:wra
 .tag{border:2px solid #9AD3B8;color:#9AD3B8;border-radius:8px;padding:0 8px;font-size:12px;line-height:22px;font-weight:700;letter-spacing:.08em}
 header.top nav{display:flex;gap:22px;font-size:15px}header.top nav a{color:#fff}
 .chips{background:var(--panel);border-bottom:1px solid var(--line)}
-.chips .wrap{padding-top:14px;padding-bottom:14px;display:flex;flex-wrap:wrap;gap:10px}
+.chips .wrap{padding-top:12px;padding-bottom:12px;display:flex;flex-direction:column;gap:8px}
+.chiprow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.cl{width:96px;font-size:12px;font-weight:700;letter-spacing:.08em;color:var(--soft)}
 .chip{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:14px}
 .chip i{width:9px;height:9px;border-radius:50%;display:inline-block}.chip span{color:var(--soft)}
 main{padding-bottom:72px}
@@ -103,11 +105,15 @@ footer span.t{flex:1 1 600px;font-size:15px}
 </div></header>
 
 <div class="chips"><div class="wrap">
-  <div class="chip"><i style="background:#3A9E76"></i><b>Zetaris</b><span>data layer</span></div>
-  <div class="chip"><i style="background:#3A9E76"></i><b>Meterless Nightshift</b><span>model provider</span></div>
-  <div class="chip"><i style="background:#3A9E76"></i><b>Meterless H-MEM</b><span>memory, conformance 13/13</span></div>
-  <div class="chip"><i style="background:#EE5A4A"></i><b>NVIDIA Nemotron 3.5 Lightning</b><span>drafts</span></div>
-  <div class="chip"><i style="background:#EE5A4A"></i><b>NVIDIA Nemotron 3 Ultra</b><span>redrafts</span></div>
+  <div class="chiprow"><span class="cl">PLATFORMS</span>
+    <div class="chip"><i style="background:#3A9E76"></i><b>Zetaris</b><span>data layer</span></div>
+    <div class="chip"><i style="background:#3A9E76"></i><b>Meterless Nightshift</b><span>model provider</span></div>
+    <div class="chip"><i style="background:#3A9E76"></i><b>Meterless H-MEM</b><span>memory, conformance 13/13</span></div>
+  </div>
+  <div class="chiprow"><span class="cl">MODELS</span>
+    <div class="chip"><i style="background:#EE5A4A"></i><b>NVIDIA Nemotron 3.5 Lightning</b><span>drafts</span></div>
+    <div class="chip"><i style="background:#EE5A4A"></i><b>NVIDIA Nemotron 3 Ultra</b><span>redrafts after a rejection</span></div>
+  </div>
 </div></div>
 
 <main><div class="wrap">
