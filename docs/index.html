@@ -1,131 +1,318 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Device Recall Explainer: replay of recorded runs</title>
-<meta name="description" content="Replay of recorded runs of an agent that explains FDA device recalls and checks every number against SQL.">
+<title>RecallWise The Device Recall Explainer</title>
+<meta name="description" content="RecallWise explains why FDA device recall numbers moved and shows where every figure comes from. Replays of recorded runs.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <style>
-:root{--ink:#2B2F33;--panel:#F3F3F1;--coral:#EE5A4A;--green:#3A9E76;--grey:#6F767D;--line:#DADBDC}
-*{box-sizing:border-box}body{margin:0;font:16px/1.55 Arial,Helvetica,sans-serif;color:var(--ink);background:#fff}
-main{max-width:980px;margin:0 auto;padding:28px 20px 64px}
-h1{font:700 30px/1.2 Cambria,Georgia,serif;margin:0 0 4px}h2{font:700 22px/1.3 Cambria,Georgia,serif;margin:36px 0 10px}
-.meta{color:var(--grey);font-size:14px}a{color:var(--ink)}
-.banner{background:var(--ink);color:#fff;border-radius:10px;padding:12px 18px;margin:16px 0;font-weight:700}
-.banner a{color:#fff}.problem{font-size:17px;margin:14px 0}.notice{display:inline-block;background:var(--panel);border-radius:8px;padding:4px 12px;font-size:14px;margin:0 0 6px}.banner.footer{margin-top:40px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:14px 0}
-.card{text-align:left;font:inherit;color:inherit;background:#fff;border:2px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+:root{--ink:#2B2F33;--slate:#4A5157;--panel:#F3F3F1;--coral:#EE5A4A;--coral-d:#B93B2D;--green:#3A9E76;--green-d:#2F7F5E;--grey:#6F767D;--line:#DADBDC;--soft:#5B6269;--body:#3C4247}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 Arial,Helvetica,sans-serif;color:var(--ink);background:#fff}
+a{color:var(--ink)}a:hover{color:var(--coral-d)}
+a:focus-visible,button:focus-visible{outline:3px solid var(--coral);outline-offset:2px}
+button{font-family:inherit;cursor:pointer}
+.wrap{max-width:1360px;margin:0 auto;padding:0 40px}
+h1,h2,.serif{font-family:Cambria,Georgia,serif}
+header.top{background:var(--slate);color:#fff}
+header.top .wrap{padding-top:14px;padding-bottom:14px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand b{font-family:Cambria,Georgia,serif;font-size:24px}
+.brand .sub{font-size:14px;color:#E3E6E8}
+.tag{border:2px solid #9AD3B8;color:#9AD3B8;border-radius:8px;padding:0 8px;font-size:12px;line-height:22px;font-weight:700;letter-spacing:.08em}
+header.top nav{display:flex;gap:22px;font-size:15px}header.top nav a{color:#fff}
+.chips{background:var(--panel);border-bottom:1px solid var(--line)}
+.chips .wrap{padding-top:14px;padding-bottom:14px;display:flex;flex-wrap:wrap;gap:10px}
+.chip{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:14px}
+.chip i{width:9px;height:9px;border-radius:50%;display:inline-block}.chip span{color:var(--soft)}
+main{padding-bottom:72px}
+.hero{margin-top:40px;display:flex;flex-wrap:wrap;gap:40px;align-items:stretch}
+.hero .text{flex:1 1 520px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:16px}
+.hero h1{margin:0;font-size:48px;line-height:1.12}
+.hero p{margin:0;font-size:19px;color:var(--body)}
+.hero p.small{font-size:14px;color:var(--soft)}
+.cta{align-self:flex-start;background:#E4E6E8;color:var(--ink);border:1px solid #C4C8CC;font-size:18px;font-weight:700;border-radius:10px;padding:12px 26px;text-decoration:none}
+.cta:hover{background:#D9DCDF;color:var(--ink)}
+.tiles{flex:1 1 560px;min-width:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.tile{background:var(--panel);border-radius:14px;padding:20px}
+.tile .n{font-family:Cambria,Georgia,serif;font-size:44px;font-weight:700;line-height:1.1}
+.tile .d{font-size:14px;color:var(--body);margin-top:4px}
+.tile .src{font-size:12px;color:var(--soft);margin-top:6px}
+.bar{height:10px;border-radius:5px;margin-top:6px}
+section{margin-top:56px}
+h2{margin:0 0 6px;font-size:30px}
+.lead{margin:0 0 18px;font-size:15px;color:var(--soft)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.card{text-align:left;background:#fff;border:2px solid var(--line);border-radius:14px;padding:16px 18px;color:var(--ink);font-size:15px;display:flex;flex-direction:column;gap:8px}
 .card:hover{border-color:var(--coral)}.card[aria-pressed=true]{border-color:var(--coral);background:#FDF1EF}
-.card b{display:block}.card span{display:block;font-size:13px;color:var(--grey)}
-.row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:10px 0}
-button.go{background:var(--coral);color:#fff;border:0;border-radius:8px;padding:10px 22px;font:700 16px Arial;cursor:pointer}
-button.go:disabled{opacity:.5;cursor:default}button.plain{background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 14px;font:14px Arial;cursor:pointer}
-.stamp{display:inline-block;border:2px solid;border-radius:8px;padding:0 8px;font:700 12px/22px Arial;letter-spacing:.08em;text-transform:uppercase}
-.ok{color:var(--green);border-color:var(--green)}.no{color:var(--coral);border-color:var(--coral)}
-.panel{background:var(--panel);border-radius:10px;padding:14px 18px;margin:12px 0}
-#log{font:13px/1.6 "Courier New",monospace;min-height:140px;max-height:300px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px;margin:8px 0 0}
-#log div.bad{color:var(--coral)}#log div.good{color:var(--green)}#log div.dim{color:var(--grey)}
-#answer{font-size:18px;margin:8px 0 0}
-iframe{width:100%;height:760px;border:1px solid var(--line);border-radius:10px;margin-top:10px;background:#fff}
-img.arch{width:100%;height:auto;border:1px solid var(--line);border-radius:10px}
+.card .t{font-size:18px;font-weight:700}.card .q{font-size:14px;color:var(--body)}.card .l{font-size:13px;color:var(--soft)}
+.stamp{display:inline-block;border:2px solid;border-radius:8px;padding:0 8px;font-size:12px;line-height:22px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;align-self:flex-start}
+.ok{color:var(--green-d);border-color:var(--green-d)}.no{color:var(--coral-d);border-color:var(--coral-d)}
+.panel{margin-top:32px;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.panel .head{background:var(--panel);padding:20px 24px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between}
+.panel .head .qwrap{flex:1 1 560px;min-width:0}
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--soft);text-transform:uppercase}
+.panel .head .q{font-family:Cambria,Georgia,serif;font-size:24px;font-weight:700}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+#play{background:var(--coral);color:#fff;border:0;border-radius:8px;padding:11px 24px;font-size:17px;font-weight:700}
+#play:disabled{opacity:.5;cursor:default}
+#skip{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 16px;font-size:14px}
+.stats{padding:18px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;border-bottom:1px solid var(--line)}
+.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.stat .v{font-family:Cambria,Georgia,serif;font-size:28px;font-weight:700;line-height:1.15}
+.stat .v.long{font-size:19px;line-height:1.5;padding:3px 0}.stat .k{font-size:13px;color:var(--soft)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;padding:14px 24px 0;border-bottom:1px solid var(--line)}
+.tab{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-bottom:0;border-radius:10px 10px 0 0;padding:10px 18px;font-size:15px;font-weight:700}
+.tab[aria-selected=true]{background:#fff;color:var(--coral-d)}
+.body{padding:24px}
+.cols{display:flex;flex-wrap:wrap;gap:28px}.cols>.main{flex:1 1 560px;min-width:0}.cols>.side{flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:14px}
+#hint{border:1px dashed var(--line);border-radius:12px;padding:28px 22px;text-align:center;color:var(--soft);font-size:16px}
+#log div{display:flex;gap:12px;align-items:flex-start;padding:7px 0;border-bottom:1px solid #EEF0F1;font-size:15px}
+#log div i{margin-top:7px;width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
+.box{background:var(--panel);border-radius:12px;padding:16px 18px;font-size:14px}
+.lookbar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:var(--line)}
+.legend{margin-top:10px;display:flex;flex-wrap:wrap;gap:14px;font-size:13px}
+.answer{margin:0;font-size:18px;line-height:1.6}
+.proof{border:2px solid var(--green);border-radius:14px;padding:16px 18px;background:#F5FBF8}
+.proof .eyebrow{color:var(--green-d);margin-bottom:8px}
+pre{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px;font:13px/1.45 "Courier New",monospace;margin:10px 0}
+.item{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:10px}
+.item .nt{font-size:13px;color:var(--soft);margin-bottom:4px}
+.pill{flex:none;color:#fff;border-radius:8px;padding:0 10px;font-size:12px;line-height:24px;height:24px;font-weight:700}
+.rej{display:flex;gap:12px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;font-size:15px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.sc{border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.sc .t{font-size:18px;font-weight:700}.sc .b{font-size:14px;color:var(--body)}.sc .f{font-size:13px;color:var(--soft);word-break:break-word}
+.btn{display:inline-block;margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:9px 16px;font-size:14px;color:var(--ink);text-decoration:none}
+.flow{display:flex;flex-wrap:wrap;gap:14px}
+.step{flex:1 1 200px;min-width:0;border:2px solid;border-radius:14px;padding:16px 18px}
+.step .n{font-size:12px;font-weight:700;letter-spacing:.08em;opacity:.85}.step .t{font-size:19px;font-weight:700;margin:2px 0 6px}.step .b{font-size:14px}
+.notes{margin-top:14px;display:flex;flex-wrap:wrap;gap:14px}.notes>div{flex:1 1 520px;border-radius:12px;padding:12px 18px;font-size:15px}
+footer{margin-top:40px;background:#E8F5EE;border:1px solid #B9DEC9;border-radius:12px;padding:16px 22px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+footer .tag{background:var(--green-d);border-color:var(--green-d);color:#fff;line-height:24px}
+footer span.t{flex:1 1 600px;font-size:15px}
 [hidden]{display:none!important}
-</style></head><body><main>
-<h1>Device Recall Explainer</h1>
-<p class="meta">An agent that explains FDA device recalls and refuses to state any number it cannot trace to a SQL query.
-<a href="https://github.com/smahanti8/device-recall-explainer">Source and README</a></p>
+@media (max-width:720px){.wrap{padding:0 20px}.hero h1{font-size:34px}.tile .n{font-size:34px}.body,.stats,.tabs,.panel .head{padding-left:16px;padding-right:16px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style></head><body>
 
-<p class="problem">A recall is the FDA's signal that a device already in use may hurt people. Between January 2018 and June 2022, 13,623 medical devices were recalled in 5,035 recall events; in a review of 189 Class I recalls of moderate- and high-risk devices, 30 had at least one associated patient death
-(<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10204764/">Mooghali et al., 2023</a>; "associated with", not "caused by").
-The hard part is knowing what a count means. In this data, cardiovascular recall records rose from 281 to 482 in a year, and one product code's 54 records were a single event from a single firm. This agent answers "why did this change?" and shows its work: every number links to the SQL result behind it, and an answer it cannot verify is never printed.</p>
-<p class="notice"><b>Replay of recorded runs.</b> Nothing runs live on this page.</p>
+<header class="top"><div class="wrap">
+  <div class="brand">
+    <img src="favicon.svg" width="34" height="34" alt="">
+    <b>RecallWise</b><span class="sub">The Device Recall Explainer</span><span class="tag">REPLAY</span>
+  </div>
+  <nav><a href="https://github.com/smahanti8/device-recall-explainer">Source and README</a><a href="https://github.com/smahanti8/device-recall-explainer#try-it">Run it yourself</a></nav>
+</div></header>
 
+<div class="chips"><div class="wrap">
+  <div class="chip"><i style="background:#3A9E76"></i><b>Zetaris</b><span>data layer</span></div>
+  <div class="chip"><i style="background:#3A9E76"></i><b>Meterless Nightshift</b><span>model provider</span></div>
+  <div class="chip"><i style="background:#3A9E76"></i><b>Meterless H-MEM</b><span>memory, conformance 13/13</span></div>
+  <div class="chip"><i style="background:#EE5A4A"></i><b>NVIDIA Nemotron 3.5 Lightning</b><span>drafts</span></div>
+  <div class="chip"><i style="background:#EE5A4A"></i><b>NVIDIA Nemotron 3 Ultra</b><span>redrafts</span></div>
+</div></div>
 
-<h2 style="margin-top:20px">Pick a recorded run</h2>
-<div class="cards" id="cards" role="group" aria-label="Recorded runs"></div>
-<div class="row">
-  <button class="go" id="play" disabled>Replay</button>
-  <label>Speed <select id="speed"><option value="900">1x</option><option value="450" selected>2x</option><option value="150">6x</option></select></label>
-  <button class="plain" id="skip" disabled>Skip to the answer</button>
-  <span id="status" class="stamp" hidden></span>
+<main><div class="wrap">
+
+<div class="hero">
+  <div class="text">
+    <h1>Cardiovascular device recalls rose from 281 to 482 in one year. Why?</h1>
+    <p>The FDA recalls a device already in use when it may hurt people (a Class I recall means a reasonable probability of serious adverse health consequences or death; <a href="https://www.fda.gov/safety/industry-guidance-recalls/recalls-background-and-definitions">FDA definition</a>). Counting recalls can mislead: 54 of those recall entries were really one problem at one company. This agent explains what is behind the numbers and shows where every figure comes from, so you can check it yourself. If it cannot back a number up, it says nothing.</p>
+    <a class="cta" href="#run-panel" id="cta">See it in action &#8595;</a>
+    <p class="small">Built on public FDA data. Descriptive statistics only, not medical or regulatory advice.</p>
+  </div>
+  <div class="tiles">
+    <div class="tile"><div class="n">281 &rarr; 482</div><div class="d">recall entries for heart and blood-vessel devices, 2023 to 2024 (+201)</div>
+      <div class="bar" style="width:58%;background:#9AA1A7"></div><div class="bar" style="width:100%;background:#EE5A4A"></div></div>
+    <div class="tile"><div class="n">54 &rarr; 1</div><div class="d">recall entries for one device type (code DSY) were a single recall by a single company</div></div>
+    <div class="tile"><div class="n">30 of 189</div><div class="d">reviewed recalls in the FDA's most serious category (Class I, moderate- and high-risk devices) had a patient death associated with them, 2018 to mid-2022</div>
+      <div class="bar" style="width:100%;background:#DADBDC"><div class="bar" style="width:15.8%;background:#EE5A4A;margin:0"></div></div>
+      <div class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10204764/">Mooghali et al., 2023</a>. "Associated with", not "caused by".</div></div>
+    <div class="tile"><div class="n">13,623</div><div class="d">medical devices recalled in 5,035 recall events (2018 to mid-2022), 271 of them in the most serious category</div></div>
+  </div>
 </div>
-<div class="panel"><b id="question">Choose a run to begin.</b>
-  <div id="log" aria-live="polite"></div></div>
-<div class="panel" id="result" hidden><b id="resultTitle">Answer</b><p id="answer"></p>
-  <p class="meta" id="note"></p>
-  <iframe id="report" title="Full report of the recorded run" hidden></iframe></div>
 
-<h2>How it works</h2>
-<img class="arch" src="architecture.svg" alt="Architecture: a question passes the scope check and memory recall; the drafter's claims are checked by the evaluator against Zetaris; a rejection goes back for a redraft, and nothing unverified is ever shown">
-<p class="meta">Every number in an answer is a claim that cites a cell of a SQL result. The evaluator is plain code, not the model: it re-reads that result before the answer is shown.</p>
+<section>
+  <h2>Pick a recorded run</h2>
+  <p class="lead">Five runs from the repository: three verified answers, one run where the evaluator rejected every draft, and one refusal.</p>
+  <div class="cards" id="cards" role="group" aria-label="Recorded runs"></div>
+</section>
+
+<div class="panel" id="run-panel">
+  <div class="head">
+    <div class="qwrap"><div class="eyebrow" id="mode"></div><div class="q" id="question">Choose a run to begin.</div></div>
+    <div class="ctl">
+      <button id="play" type="button" disabled>&#9654; Replay</button>
+      <button id="skip" type="button" disabled>Skip to the answer</button>
+      <span id="verdict" class="stamp" hidden></span>
+    </div>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="body" id="body"></div>
+</div>
+
+<section>
+  <h2>How a question becomes a verified answer</h2>
+  <p class="lead">Coral boxes are model calls, grey boxes are plain code, green is a verified answer. The model never checks itself: the evaluator is code.</p>
+  <div class="flow">
+    <div class="step" style="background:#fff;border-color:#DADBDC"><div class="n">STEP 1</div><div class="t">Question</div><div class="b">A "why did this change?" question about FDA device recalls.</div></div>
+    <div class="step" style="background:#F3F3F1;border-color:#2B2F33"><div class="n">STEP 2</div><div class="t">Scope check</div><div class="b">Code refuses off-topic questions and years the data does not hold, before any model call.</div></div>
+    <div class="step" style="background:#EE5A4A;border-color:#B93B2D;color:#fff"><div class="n">STEP 3</div><div class="t">Drafter</div><div class="b">An AI model (NVIDIA Nemotron) writes the answer, and every number must point to the data it came from.</div></div>
+    <div class="step" style="background:#F3F3F1;border-color:#2B2F33"><div class="n">STEP 4</div><div class="t">Evaluator</div><div class="b">Plain code, not the AI, re-checks every number against the data and rejects anything it cannot confirm.</div></div>
+    <div class="step" style="background:#3A9E76;border-color:#277A58;color:#fff"><div class="n">STEP 5</div><div class="t">Verified answer</div><div class="b">Each number links to its proof. Report, run log and receipts are saved.</div></div>
+  </div>
+  <div class="notes">
+    <div style="background:#FDF1EF;border:1px dashed #EE5A4A"><b style="color:#B93B2D">Rejected?</b> The evaluator names the reason (no citation, wrong scope, value mismatch, an unclaimed number) and sends it back for a redraft on a larger Nemotron model. Missing detail triggers a research step that fetches it from Zetaris.</div>
+    <div style="background:#F3F3F1;border:1px solid #6F767D"><b>Zetaris</b> serves the data: guarded, read-only SQL, one SELECT per call, openfda tables only. <b>H-MEM</b> recalls earlier verified claims as hints (never evidence) and stores new ones with their SQL.</div>
+  </div>
+</section>
+
+<footer><span class="tag">REPLAY</span><span class="t"><b>RecallWise, the Device Recall Explainer: replay of recorded runs.</b> Nothing runs live on this page. Each run was recorded from a real run, with SQL in Zetaris and reasoning on NVIDIA Nemotron through Meterless Nightshift; this page plays back the saved run logs and reports. To ask your own question, run it yourself: sample mode needs no services. Source and setup: <a href="https://github.com/smahanti8/device-recall-explainer">github.com/smahanti8/device-recall-explainer</a>. Built for the Open Agent Hackathon 2026.</span></footer>
+
+</div></main>
 
 <script>
 const $ = (id) => document.getElementById(id);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-let runs = [], current = null, token = 0;
+const STEP_MS = 450;
+const DOT = {question: "#2B2F33", round: "#2B2F33", zetaris: "#6F767D", memory: "#6F767D", model: "#EE5A4A",
+  research: "#C98A1B", escalate: "#EE5A4A", check: "#6F767D", end: "#6F767D", refused: "#EE5A4A"};
+const REASONS = [["no_citation", "the claim cites no SQL"], ["sql_failed", "the cited SQL could not run"],
+  ["no_such_cell", "the cited row or column does not exist"], ["scope_mismatch", "the wording names a scope the SQL never mentions"],
+  ["value_mismatch", "the cell differs from the claimed value"], ["unclaimed_number", "a number in the text is backed by no claim"],
+  ["no_claims", "the draft states nothing checkable"], ["model_unavailable", "the model failed after retries; the run continues"]];
+const TABS = [["replay", "Replay"], ["proof", "Answer and proof"], ["queries", "Queries"], ["rejections", "Rejections"], ["stack", "Stack and receipts"]];
+let runs = [], current = null, tab = "replay", started = false, token = 0;
 
-function row(step) {
-  const el = document.createElement("div");
-  el.textContent = step.text;  // run text is only ever inserted as text
-  if (step.tone) el.className = step.tone;
-  $("log").appendChild(el);
-  $("log").scrollTop = $("log").scrollHeight;
+function el(tag, props, ...kids) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (k === "style") node.style.cssText = v; else if (k === "text") node.textContent = v; else node.setAttribute(k, v);
+  }
+  for (const kid of kids) node.append(kid);
+  return node;
+}
+const nice = (m) => m.replace("nvidia/", "").replace("-30b-a3b", "").replace("-550b-a55b", "");
+const verdict = (r) => r.refused ? ["Refused", false] : r.verified ? ["Verified", true] : ["No verified answer", false];
+
+function stat(value, label) { return el("div", {class: "stat"}, el("div", {class: "v" + (value.length > 10 ? " long" : ""), text: value}), el("div", {class: "k", text: label})); }
+
+function renderCards() {
+  $("cards").textContent = "";
+  for (const r of runs) {
+    const [label, ok] = verdict(r), q = r.question.length > 78 ? r.question.slice(0, 75) + "..." : r.question;
+    const line = r.rounds ? r.rounds + (r.rounds === 1 ? " round" : " rounds") + " · " + r.queries.fetched + " data lookups · " + r.queries.cached + " reused" : "No model call, no data lookups";
+    const card = el("button", {type: "button", class: "card", "aria-pressed": String(current && current.id === r.id)},
+      el("span", {class: "stamp " + (ok ? "ok" : "no"), text: label}), el("span", {class: "t", text: r.title}),
+      el("span", {class: "q", text: q}), el("span", {class: "l", text: line}));
+    card.onclick = () => select(r);
+    $("cards").appendChild(card);
+  }
 }
 
-function stamp(ok, text) {
-  const el = $("status");
-  el.hidden = false; el.className = "stamp " + (ok ? "ok" : "no"); el.textContent = text;
+function renderHeader() {
+  const r = current, [label, ok] = verdict(r);
+  $("mode").textContent = r.sub; $("question").textContent = r.question;
+  const v = $("verdict"); v.hidden = false; v.className = "stamp " + (ok ? "ok" : "no"); v.textContent = label;
+  const tok = r.tokens ? r.tokens.in + " in / " + r.tokens.out + " out" : "none";
+  $("stats").textContent = "";
+  for (const [a, b] of [[String(r.rounds), r.rounds === 1 ? "round" : "rounds"], [r.claims ? String(r.claims) : "none", "claims verified"],
+    [String(r.queries.fetched), "data lookups"], [String(r.queries.cached), "results reused"],
+    [String(r.calls), r.calls === 1 ? "model call" : "model calls"], [tok, "tokens"]]) $("stats").appendChild(stat(a, b));
 }
 
-function reset() {
-  token++;
-  $("log").textContent = ""; $("status").hidden = true; $("result").hidden = true; $("report").hidden = true;
+function renderTabs() {
+  $("tabs").textContent = "";
+  for (const [id, label] of TABS) {
+    const b = el("button", {type: "button", role: "tab", class: "tab", "aria-selected": String(tab === id), text: label});
+    b.onclick = () => { tab = id; renderTabs(); renderBody(); };
+    $("tabs").appendChild(b);
+  }
 }
 
-function select(run) {
-  reset(); current = run;
-  document.querySelectorAll(".card").forEach((c) => c.setAttribute("aria-pressed", c.dataset.id === run.id));
-  $("question").textContent = run.question;
+function addStep(step) {
+  const row = el("div", {}, el("i", {style: "background:" + (step.tone === "bad" ? "#EE5A4A" : step.tone === "good" ? "#3A9E76" : DOT[step.kind] || "#6F767D")}),
+    el("span", {text: step.text, style: "color:" + (step.tone === "bad" ? "#B93B2D" : step.tone === "good" ? "#2F7F5E" : "#2B2F33")}));
+  $("log").appendChild(row);
+}
+
+function renderBody() {
+  const r = current, body = $("body"); body.textContent = "";
+  if (tab === "replay") {
+    const total = r.queries.fetched + r.queries.cached + r.queries.failed, pct = (n) => (total ? (100 * n / total).toFixed(1) : 0) + "%";
+    const log = el("div", {id: "log", "aria-live": "polite"});
+    const hint = el("div", {id: "hint", text: "Press Replay to watch the agent work through this question, step by step."});
+    hint.hidden = started;
+    const main = el("div", {class: "main"}, el("div", {class: "eyebrow", text: "Step by step", style: "margin-bottom:10px"}), hint, log);
+    const side = el("div", {class: "side"},
+      el("div", {class: "box"}, el("div", {class: "eyebrow", style: "margin-bottom:10px"}, "Data lookups ", el("span", {style: "font-weight:400;letter-spacing:0;text-transform:none", text: "· via Zetaris, our data platform"})),
+        el("div", {class: "lookbar"}, el("div", {style: "width:" + pct(r.queries.fetched) + ";background:#6F767D"}), el("div", {style: "width:" + pct(r.queries.cached) + ";background:#3A9E76"}), el("div", {style: "width:" + pct(r.queries.failed) + ";background:#EE5A4A"})),
+        el("div", {class: "legend"}, el("span", {text: "■ " + r.queries.fetched + " looked up"}), el("span", {text: "■ " + r.queries.cached + " reused"}), el("span", {text: "■ " + r.queries.failed + " failed"}))),
+      el("div", {class: "box"}, el("div", {class: "eyebrow", style: "margin-bottom:6px", text: "What to watch for"}), el("div", {text: r.watch})));
+    body.appendChild(el("div", {class: "cols"}, main, side));
+    if (started) for (const s of r.steps.slice(0, shown)) addStep(s);
+  } else if (tab === "proof") {
+    const answer = r.answer || (r.refused ? r.message : "No answer is shown. The evaluator rejected every draft: queries Zetaris could not run, a share figure the SQL did not return, and numbers in the text that no claim backed.");
+    const main = el("div", {class: "main"}, el("div", {class: "eyebrow", style: "margin-bottom:10px", text: r.verified ? "Verified answer" : "Result"}), el("p", {class: "answer", text: answer}));
+    if (r.report) main.appendChild(el("a", {class: "btn", href: r.report, target: "_blank", rel: "noopener", text: "Open the full report: every claim, its SQL and the verdict"}));
+    const proof = r.proof ? el("div", {class: "proof"}, el("div", {class: "eyebrow", text: "Example proof"}), el("div", {style: "font-size:14px", text: "Claim: " + r.proof.claim}),
+      el("pre", {text: r.proof.sql}), el("div", {style: "font-size:14px;font-weight:700", text: "Column " + r.proof.column + ", row " + r.proof.row + "; cell read back: " + r.proof.cell + ". Verified."}))
+      : el("div", {class: "box", text: r.verified ? "Every claim and its SQL is in the full report." : "Nothing to verify: no claim was accepted."});
+    body.appendChild(el("div", {class: "cols"}, main, el("div", {class: "side"}, proof)));
+  } else if (tab === "queries") {
+    body.appendChild(el("div", {class: "eyebrow", style: "margin-bottom:10px"}, "Data lookups, sample of the SQL ", el("span", {style: "font-weight:400;letter-spacing:0;text-transform:none", text: "· via Zetaris, our data platform. SQL is the language used to ask a database."})));
+    for (const q of r.queries_sample) body.appendChild(el("div", {class: "item"}, el("div", {class: "nt", text: q.note}), el("code", {style: "font:13px/1.45 'Courier New',monospace;word-break:break-word", text: q.sql})));
+    body.appendChild(el("p", {class: "lead", text: r.queries.fetched + " data lookups, " + r.queries.cached + " reused, " + r.queries.failed + " failed. The full report lists every statement and its status."}));
+  } else if (tab === "rejections") {
+    const left = el("div", {class: "main"}, el("div", {class: "eyebrow", style: "margin-bottom:10px", text: "What the evaluator decided in this run"}));
+    const rows = r.rejections.length ? r.rejections : [{round: "SCOPE", text: r.refused ? "Refused before any model call: the question is not about device recalls in 2023 or 2024." : "No decisions recorded.", ok: false}];
+    for (const x of rows) left.appendChild(el("div", {class: "rej"}, el("span", {class: "pill", style: "background:" + (x.ok ? "#2F7F5E" : "#EE5A4A"), text: typeof x.round === "number" ? "ROUND " + x.round : x.round}), el("span", {text: x.text})));
+    const right = el("div", {class: "side"}, el("div", {class: "box"}, el("div", {class: "eyebrow", style: "margin-bottom:8px", text: "The eight rejection reasons"}),
+      ...REASONS.map(([c, p]) => el("div", {style: "padding:3px 0"}, el("code", {style: "font:700 13px 'Courier New',monospace", text: c}), " " + p))));
+    body.appendChild(el("div", {class: "cols"}, left, right));
+  } else {
+    const cards = [["DATA LAYER", "#2F7F5E", "Zetaris", "Public openFDA data registered as REST tables and views. The agent only sends guarded, read-only SQL: one SELECT per call, openfda tables only.", r.queries.fetched + " data lookups, " + r.queries.cached + " reused, " + r.queries.failed + " failed in this run"],
+      ["MODEL PROVIDER", "#B93B2D", "Meterless Nightshift", "Every model call goes through one shared client to an OpenAI-compatible endpoint. Each response carries a receipt naming the model that answered.", r.receipts.length ? r.receipts.slice(0, 3).join(", ") + (r.receipts.length > 3 ? " and " + (r.receipts.length - 3) + " more" : "") : "No receipts: no model was called"],
+      ["MEMORY", "#2B2F33", "Meterless H-MEM", "Verified claims from earlier sessions come back as hints, never as evidence, and new ones are stored with their SQL. The engine is vendored unmodified and passes its conformance suite 13/13.", r.memory ? "Run log: " + r.memory : "No verified claims to store in this run"],
+      ["MODELS", "#B93B2D", "NVIDIA Nemotron", "Nemotron 3.5 Lightning drafts. Nemotron 3 Ultra redrafts only after a rejection.", r.models.length ? "Used in this run: " + r.models.map(nice).join(", ") : "Used in this run: none"]];
+    const grid = el("div", {class: "grid4"});
+    for (const [tag, color, title, text, foot] of cards) grid.appendChild(el("div", {class: "sc"}, el("div", {class: "eyebrow", style: "color:" + color, text: tag}), el("div", {class: "t", text: title}), el("div", {class: "b", text}), el("div", {class: "f", text: foot})));
+    body.appendChild(grid);
+  }
+}
+
+let shown = 0;
+function select(r) {
+  token++; current = r; tab = "replay"; started = false; shown = 0;
   $("play").disabled = false; $("skip").disabled = false;
-}
-
-function finish(run) {
-  if (run.refused) { stamp(false, "Refused"); return; }
-  stamp(run.verified, run.verified ? "Verified" : "No verified answer");
-  $("result").hidden = false;
-  $("resultTitle").textContent = run.verified ? "Answer" : "Result";
-  $("answer").textContent = run.answer || "The evaluator rejected every draft, so no answer is shown. That is the intended outcome when nothing can be verified.";
-  $("note").textContent = run.queries.fetched + " Zetaris queries fetched" + (run.queries.failed ? ", " + run.queries.failed + " failed" : "") + ", " + run.queries.cached + " served from the in-run cache. Full report below: claims, SQL, rounds and model receipts.";
-  if (run.report) { $("report").src = run.report; $("report").hidden = false; }
+  renderCards(); renderHeader(); renderTabs(); renderBody();
 }
 
 async function play(skip) {
-  const run = current, mine = ++token;
-  $("log").textContent = ""; $("status").hidden = true; $("result").hidden = true; $("report").hidden = true;
+  const r = current, mine = ++token;
+  started = true; shown = 0; tab = skip ? "proof" : "replay";
+  renderTabs(); renderBody();
   $("play").disabled = true;
-  for (const step of run.steps) {
-    row(step);
-    if (!skip) await sleep(Number($("speed").value));
-    if (mine !== token) return;  // another run was picked or Replay pressed again
+  if (skip) { shown = r.steps.length; $("play").disabled = false; return; }
+  const hint = $("hint"); if (hint) hint.hidden = true;
+  for (const step of r.steps) {
+    if (mine !== token) return;
+    shown++; addStep(step);
+    $("log").lastChild.scrollIntoView({block: "nearest"});
+    await sleep(STEP_MS);
   }
-  finish(run);
   $("play").disabled = false;
 }
 
 $("play").onclick = () => play(false);
 $("skip").onclick = () => play(true);
+$("cta").onclick = (event) => {
+  event.preventDefault();
+  $("run-panel").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start"});
+  if (current) play(false);
+};
 
 fetch("runs.json").then((r) => r.json()).then((data) => {
-  runs = data.runs;
-  for (const run of runs) {
-    const card = document.createElement("button");
-    card.className = "card"; card.dataset.id = run.id; card.setAttribute("aria-pressed", "false");
-    const title = document.createElement("b"); title.textContent = run.title;
-    const sub = document.createElement("span");
-    sub.textContent = run.refused ? "refused before any model call"
-      : run.verified ? "verified answer · " + run.mode + " mode" : "no verified answer · " + run.mode + " mode";
-    card.append(title, sub);
-    card.onclick = () => select(run);
-    $("cards").appendChild(card);
-  }
-  select(runs[0]);
+  runs = data.runs; select(runs[0]);
 }).catch(() => { $("question").textContent = "Could not load runs.json. Serve this folder over http (for example: python3 -m http.server)."; });
 </script>
-<div class="banner footer">REPLAY OF RECORDED RUNS. Each run above was recorded from a real run (SQL in Zetaris, reasoning on NVIDIA Nemotron through Meterless Nightshift). Nothing is running on this page: it plays back the saved run log and shows the saved report. To ask your own question, <a href="https://github.com/smahanti8/device-recall-explainer#try-it">run it yourself</a>; sample mode needs no services.</div>
-</main></body></html>
+</body></html>

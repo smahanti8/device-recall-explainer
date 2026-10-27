@@ -3,6 +3,7 @@
   {
    "id": "sample-run-1",
    "title": "Why did recalls rise?",
+   "sub": "Playbook mode",
    "question": "Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?",
    "mode": "playbook",
    "verified": true,
@@ -116,11 +117,62 @@
     "fetched": 36,
     "cached": 86,
     "failed": 0
-   }
+   },
+   "rounds": 2,
+   "claims": 35,
+   "calls": 2,
+   "tokens": {
+    "in": "5,078",
+    "out": "4,402"
+   },
+   "models": [
+    "nvidia/nemotron-3-ultra-550b-a55b",
+    "nvidia/nemotron-3.5-lightning-30b-a3b"
+   ],
+   "receipts": [
+    "rcpt_req_dv9gxx4q",
+    "rcpt_req_63urdzfk"
+   ],
+   "rejections": [
+    {
+     "round": 1,
+     "text": "2 rejected (missing_evidence, missing_evidence)",
+     "ok": false
+    },
+    {
+     "round": 2,
+     "text": "all verified",
+     "ok": true
+    }
+   ],
+   "memory": "35 new, 0 reinforced, 0 changed",
+   "proof": {
+    "claim": "Cardiovascular recall records in 2023 = 281",
+    "sql": "SELECT SUM(b.recall_count) AS total FROM openfda.classification_cardiovascular_table c JOIN openfda.recall_by_product_2023_table b ON b.product_code = c.product_code",
+    "column": "total",
+    "row": "0",
+    "cell": "281"
+   },
+   "queries_sample": [
+    {
+     "note": "Cardiovascular recall records in 2023 = 281",
+     "sql": "SELECT SUM(b.recall_count) AS total FROM openfda.classification_cardiovascular_table c JOIN openfda.recall_by_product_2023_table b ON b.product_code = c.product_code"
+    },
+    {
+     "note": "Cardiovascular recall records in 2024 = 482",
+     "sql": "SELECT SUM(b.recall_count) AS total FROM openfda.classification_cardiovascular_table c JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code"
+    },
+    {
+     "note": "Increase in cardiovascular recall records, 2023 to 2024 = 201",
+     "sql": "SELECT SUM(COALESCE(b.recall_count,0)) - SUM(COALESCE(a.recall_count,0)) AS diff FROM openfda.classification_cardiovascular_table c LEFT JOIN openfda.recall_by_product_2023_table a ON a.product_code = c.product_code LEFT JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code"
+    }
+   ],
+   "watch": "Round 1 names two product codes without their detail, so the evaluator rejects it. A research step fetches the detail and the redraft, on the larger model, verifies all 35 claims."
   },
   {
    "id": "sample-run-2",
    "title": "Top three product codes",
+   "sub": "Playbook mode",
    "question": "Which three product codes drove the increase in cardiovascular device recalls from 2023 to 2024, and what share of the increase do they account for?",
    "mode": "playbook",
    "verified": true,
@@ -169,11 +221,55 @@
     "fetched": 26,
     "cached": 20,
     "failed": 0
-   }
+   },
+   "rounds": 1,
+   "claims": 20,
+   "calls": 1,
+   "tokens": {
+    "in": "3,611",
+    "out": "3,759"
+   },
+   "models": [
+    "nvidia/nemotron-3.5-lightning-30b-a3b"
+   ],
+   "receipts": [
+    "rcpt_req_lvbucqnr"
+   ],
+   "rejections": [
+    {
+     "round": 1,
+     "text": "all verified",
+     "ok": true
+    }
+   ],
+   "memory": null,
+   "proof": {
+    "claim": "Cardiovascular recall records in 2023 = 281",
+    "sql": "SELECT SUM(b.recall_count) AS total FROM openfda.classification_cardiovascular_table c JOIN openfda.recall_by_product_2023_table b ON b.product_code = c.product_code",
+    "column": "total",
+    "row": "0",
+    "cell": "281"
+   },
+   "queries_sample": [
+    {
+     "note": "Cardiovascular recall records in 2023 = 281",
+     "sql": "SELECT SUM(b.recall_count) AS total FROM openfda.classification_cardiovascular_table c JOIN openfda.recall_by_product_2023_table b ON b.product_code = c.product_code"
+    },
+    {
+     "note": "Cardiovascular recall records in 2024 = 482",
+     "sql": "SELECT SUM(b.recall_count) AS total FROM openfda.classification_cardiovascular_table c JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code"
+    },
+    {
+     "note": "Increase in cardiovascular recall records, 2023 to 2024 = 201",
+     "sql": "SELECT SUM(COALESCE(b.recall_count,0)) - SUM(COALESCE(a.recall_count,0)) AS diff FROM openfda.classification_cardiovascular_table c LEFT JOIN openfda.recall_by_product_2023_table a ON a.product_code = c.product_code LEFT JOIN openfda.recall_by_product_2024_table b ON b.product_code = c.product_code"
+    }
+   ],
+   "watch": "A clean run: one round, no rejections. Compare it with the first run to see what the evaluator does when a draft is incomplete."
   },
   {
    "id": "sample-run-3",
    "title": "One product code: DSY",
+   "sub": "Playbook mode",
    "question": "For product code DSY, how many 2024 recall records were there, how many distinct recall events and firms, and what was the top root cause?",
    "mode": "playbook",
    "verified": true,
@@ -222,11 +318,55 @@
     "fetched": 26,
     "cached": 4,
     "failed": 0
-   }
+   },
+   "rounds": 1,
+   "claims": 4,
+   "calls": 1,
+   "tokens": {
+    "in": "3,610",
+    "out": "480"
+   },
+   "models": [
+    "nvidia/nemotron-3.5-lightning-30b-a3b"
+   ],
+   "receipts": [
+    "rcpt_req_2r7axh4v"
+   ],
+   "rejections": [
+    {
+     "round": 1,
+     "text": "all verified",
+     "ok": true
+    }
+   ],
+   "memory": null,
+   "proof": {
+    "claim": "DSY recall records in 2024 = 54",
+    "sql": "SELECT COUNT(*) AS n FROM openfda.recall_dsy_2024_table",
+    "column": "n",
+    "row": "0",
+    "cell": "54"
+   },
+   "queries_sample": [
+    {
+     "note": "DSY recall records in 2024 = 54",
+     "sql": "SELECT COUNT(*) AS n FROM openfda.recall_dsy_2024_table"
+    },
+    {
+     "note": "DSY recall events in 2024 = 1",
+     "sql": "SELECT COUNT(DISTINCT res_event_number) AS n FROM openfda.recall_dsy_2024_table"
+    },
+    {
+     "note": "DSY recalling firms in 2024 = 1",
+     "sql": "SELECT COUNT(DISTINCT recalling_firm) AS n FROM openfda.recall_dsy_2024_table"
+    }
+   ],
+   "watch": "A narrow question gets a narrow answer: four claims, each with its own SQL. This is where records and events are reported separately."
   },
   {
    "id": "sample-exploratory-run-1",
    "title": "Same question, exploratory mode",
+   "sub": "Exploratory mode",
    "question": "Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?",
    "mode": "exploratory",
    "verified": false,
@@ -385,11 +525,57 @@
     "fetched": 49,
     "cached": 0,
     "failed": 4
-   }
+   },
+   "rounds": 3,
+   "claims": 0,
+   "calls": 12,
+   "tokens": {
+    "in": "50,624",
+    "out": "34,623"
+   },
+   "models": [
+    "nvidia/nemotron-3.5-lightning-30b-a3b"
+   ],
+   "receipts": [
+    "rcpt_req_9rsd4u40",
+    "rcpt_req_bdivv8rq",
+    "rcpt_req_mupwtpry",
+    "rcpt_req_z9374tgb",
+    "rcpt_req_00w4jv9t",
+    "rcpt_req_qp79mns2",
+    "rcpt_req_w3g2pdqn",
+    "rcpt_req_vthwv528",
+    "rcpt_req_82yjjt6m",
+    "rcpt_req_1i3dlyv2",
+    "rcpt_req_txbbgufv",
+    "rcpt_req_67dh6cl4"
+   ],
+   "rejections": [
+    {
+     "round": 1,
+     "text": "3 rejected (sql_failed, sql_failed, scope_mismatch)",
+     "ok": false
+    },
+    {
+     "round": 2,
+     "text": "1 rejected (value_mismatch)",
+     "ok": false
+    },
+    {
+     "round": 3,
+     "text": "4 rejected (sql_failed, unclaimed_number, unclaimed_number, unclaimed_number)",
+     "ok": false
+    }
+   ],
+   "memory": null,
+   "proof": null,
+   "queries_sample": [],
+   "watch": "The evaluator refused to print an answer it could not verify. In round 2 the model claimed 65.2 but its cited SQL returned 100.0. That is the intended outcome, not a bug."
   },
   {
    "id": "sample-refusal-1",
    "title": "A question about something else",
+   "sub": "Scope check",
    "question": "What is the capital of France?",
    "mode": "refused",
    "verified": false,
@@ -413,7 +599,18 @@
     "fetched": 0,
     "cached": 0,
     "failed": 0
-   }
+   },
+   "rounds": 0,
+   "claims": 0,
+   "calls": 0,
+   "tokens": null,
+   "models": [],
+   "receipts": [],
+   "rejections": [],
+   "memory": null,
+   "proof": null,
+   "queries_sample": [],
+   "watch": "The scope check runs before any model call or query. A refusal costs nothing and says why."
   }
  ]
 }

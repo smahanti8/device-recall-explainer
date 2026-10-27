@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Recallwise">
+<rect width="64" height="64" rx="14" fill="#EE5A4A"/>
+<path d="M32 53C14 41 7 31 7 23C7 15 13 9 20.5 9C25.5 9 29.5 11.5 32 16C34.5 11.5 38.5 9 43.5 9C51 9 57 15 57 23C57 31 50 41 32 53Z" fill="#FFFFFF"/>
+<path d="M26 42V21.5H33.5a6.25 6.25 0 0 1 0 12.5H26M34 34L41 42" fill="none" stroke="#EE5A4A" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

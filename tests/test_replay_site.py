@@ -152,5 +152,108 @@ class TestPage(unittest.TestCase):
         self.assertNotIn("cdn.", source)
 
 
+class TestRunDetail(Built):
+    """Fields the run page shows: stats, receipts, rejections, an example proof (all read from the run logs and reports)."""
+
+    def test_the_playbook_runs_carry_their_real_numbers(self):
+        one, two, three = (self.by_id[i] for i in ("sample-run-1", "sample-run-2", "sample-run-3"))
+        self.assertEqual((one["rounds"], one["claims"], one["calls"]), (2, 35, 2))
+        self.assertEqual(one["tokens"], {"in": "5,078", "out": "4,402"})
+        self.assertEqual(one["receipts"], ["rcpt_req_dv9gxx4q", "rcpt_req_63urdzfk"])
+        self.assertEqual(one["models"], ["nvidia/nemotron-3-ultra-550b-a55b", "nvidia/nemotron-3.5-lightning-30b-a3b"])
+        self.assertEqual((two["rounds"], two["claims"], two["calls"]), (1, 20, 1))
+        self.assertEqual(two["tokens"], {"in": "3,611", "out": "3,759"})
+        self.assertEqual(two["receipts"], ["rcpt_req_lvbucqnr"])
+        self.assertEqual((three["rounds"], three["claims"], three["calls"]), (1, 4, 1))
+        self.assertEqual(three["tokens"], {"in": "3,610", "out": "480"})
+
+    def test_the_exploratory_run_and_the_refusal(self):
+        explore = self.by_id["sample-exploratory-run-1"]
+        self.assertEqual((explore["rounds"], explore["claims"], explore["calls"]), (3, 0, 12))
+        self.assertEqual(explore["tokens"], {"in": "50,624", "out": "34,623"})
+        self.assertEqual(len(explore["receipts"]), 12)
+        refusal = self.by_id["sample-refusal-1"]
+        self.assertEqual((refusal["rounds"], refusal["claims"], refusal["calls"]), (0, 0, 0))
+        self.assertEqual((refusal["tokens"], refusal["models"], refusal["receipts"]), (None, [], []))
+
+    def test_rejections_are_listed_by_round(self):
+        one = self.by_id["sample-run-1"]["rejections"]
+        self.assertEqual(one, [{"round": 1, "text": "2 rejected (missing_evidence, missing_evidence)", "ok": False},
+                               {"round": 2, "text": "all verified", "ok": True}])
+        explore = self.by_id["sample-exploratory-run-1"]["rejections"]
+        self.assertEqual([r["round"] for r in explore], [1, 2, 3])
+        self.assertTrue(all(not r["ok"] for r in explore))
+        self.assertEqual(self.by_id["sample-refusal-1"]["rejections"], [])
+
+    def test_a_verified_run_has_an_example_proof_from_its_first_claim(self):
+        proof = self.by_id["sample-run-1"]["proof"]
+        self.assertIn("281", proof["claim"])
+        self.assertTrue(proof["sql"].startswith("SELECT SUM(b.recall_count)"))
+        self.assertEqual((proof["column"], proof["row"], proof["cell"]), ("total", "0", "281"))
+        for run_id in ("sample-run-2", "sample-run-3"):
+            self.assertTrue(self.by_id[run_id]["proof"]["sql"].startswith("SELECT"), run_id)
+        for run_id in ("sample-exploratory-run-1", "sample-refusal-1"):
+            self.assertIsNone(self.by_id[run_id]["proof"], run_id)
+
+    def test_sample_sql_and_editorial_notes(self):
+        sample = self.by_id["sample-run-1"]["queries_sample"]
+        self.assertEqual(len(sample), 3)
+        self.assertTrue(all(q["sql"].startswith("SELECT") and q["note"] for q in sample))
+        self.assertEqual(self.by_id["sample-refusal-1"]["queries_sample"], [])
+        for run in self.runs:
+            self.assertTrue(run["watch"], run["id"])
+            self.assertTrue(run["sub"], run["id"])
+
+
+class TestRecallWisePage(unittest.TestCase):
+    """The page as designed: name, tab title, favicon, plain-language hero, empty replay list, footer disclaimer."""
+
+    @classmethod
+    def setUpClass(cls):
+        with open(PAGE, encoding="utf-8") as handle:
+            cls.source = handle.read()
+        cls.visible = re.sub(r"<script.*?</script>", "", cls.source, flags=re.S)
+
+    def test_title_and_name(self):
+        self.assertIn("<title>RecallWise The Device Recall Explainer</title>", self.source)
+        self.assertIn("RecallWise", self.visible)
+        self.assertIn("The Device Recall Explainer", self.visible)
+
+    def test_favicon_is_linked_and_valid(self):
+        self.assertIn('rel="icon"', self.source)
+        self.assertIn('href="favicon.svg"', self.source)
+        import xml.dom.minidom
+        xml.dom.minidom.parse(os.path.join(ROOT, "docs", "favicon.svg"))
+
+    def test_hero_is_plain_language(self):
+        self.assertIn("Cardiovascular device recalls rose from 281 to 482 in one year. Why?", self.visible)
+        self.assertIn("reasonable probability of serious adverse health consequences or death", self.visible)
+        self.assertIn("This agent explains", self.visible)
+        self.assertNotIn("Cardiovascular means the heart", self.visible)
+        self.assertNotIn("Every number, traced to the SQL", self.visible)
+
+    def test_one_short_button_up_top_and_no_live_disclaimer_above_the_footer(self):
+        self.assertIn("See it in action", self.visible)
+        self.assertNotIn("Replay a recorded run", self.visible)
+        head, _, footer = self.visible.partition("<footer")
+        self.assertTrue(footer, "the page needs a <footer>")
+        self.assertNotIn("nothing runs live", head.lower())
+        self.assertIn("nothing runs live", footer.lower())
+
+    def test_replay_list_is_empty_until_replay_is_pressed(self):
+        self.assertIn("Press Replay to watch the agent work", self.visible + self.source)
+        self.assertIn("hint.hidden = started", self.source)  # the hint shows until a replay starts
+        self.assertNotIn("round 1: drafting", self.visible)  # no step text is pre-filled in the page
+        self.assertIn('{id: "log", "aria-live": "polite"}', self.source)  # the list is created empty
+
+    def test_plain_words_for_the_data_layer(self):
+        self.assertIn("data lookups", self.source.lower())  # the panels are rendered by the script from runs.json
+        self.assertIn("via Zetaris", self.source)
+        self.assertNotIn("Zetaris queries", self.source)
+
+    def test_header_uses_the_soft_slate(self):
+        self.assertIn("#4A5157", self.source)
+
+
 if __name__ == "__main__":
     unittest.main()
