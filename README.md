@@ -21,12 +21,20 @@ and 24 (12.7%) had ten or more reported injuries, and about a third did not repo
 ([Mooghali et al., *Medical Devices*, 2023](https://pmc.ncbi.nlm.nih.gov/articles/PMC10204764/)). "Associated with" is the
 paper's wording: it does not say the device caused the death.
 
-The hard part for the people who review recalls is not finding a count. It is knowing what a count means. In this
-agent's own data, cardiovascular recall records rose from 281 in 2023 to 482 in 2024, and one product code alone accounted
-for 54 of the 2024 records. They were a single recall event from a single firm. Read as "recalls surged", that number
-sends a reviewer to the wrong place. This agent answers "why did this change?" and shows its work: every number links to
-the SQL result behind it, and an answer it cannot verify is never printed. It describes public data and is not medical or
-regulatory advice.
+A count tells you that recalls rose, not why. In this agent's own data, one product code's 54 recall records in 2024 were a
+single recall event from a single firm. The agent answers "why did this change?" and shows its work: every number links to
+the SQL result behind it, and an answer it cannot verify is never printed.
+
+<details>
+<summary>More: why a count misleads, and what the agent does about it</summary>
+
+The hard part for the people who review recalls is not finding a count. It is knowing what a count means. Cardiovascular
+recall records in this agent's data rose from 281 in 2023 to 482 in 2024, and read as "recalls surged" that number sends a
+reviewer to the wrong place: product code DSY alone accounted for 54 of the 2024 records, and they were one event from one
+firm. The agent reports records and distinct events separately for this reason. It describes public data and is not medical
+or regulatory advice.
+
+</details>
 
 **Product codes.** The FDA gives each type of medical device a three-letter product code in its classification
 database, for example DSY (vascular graft prosthesis), DQO (diagnostic intravascular catheter) or OEZ (cardiovascular
