@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Device Recall Explainer</title>
+<style>
+:root{--ink:#2B2F33;--panel:#F3F3F1;--coral:#EE5A4A;--green:#3A9E76;--grey:#6F767D;--line:#DADBDC}
+*{box-sizing:border-box}body{margin:0;font:16px/1.55 Arial,Helvetica,sans-serif;color:var(--ink);background:#fff}
+main{max-width:980px;margin:0 auto;padding:28px 20px 64px}
+h1{font:700 30px/1.2 Cambria,Georgia,serif;margin:0 0 4px}.meta{color:var(--grey);font-size:14px}
+.panel{background:var(--panel);border-radius:10px;padding:14px 18px;margin:12px 0}
+.banner{background:var(--ink);color:#fff;border-radius:10px;padding:12px 18px;margin:16px 0;font-weight:700}
+textarea{width:100%;font:16px Arial;padding:10px;border:1px solid var(--line);border-radius:8px;resize:vertical}
+.chips button{font:13px Arial;border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;margin:0 6px 6px 0;cursor:pointer}
+.chips button:hover{border-color:var(--coral)}
+.row{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:10px 0}
+#run{background:var(--coral);color:#fff;border:0;border-radius:8px;padding:10px 22px;font:700 16px Arial;cursor:pointer}
+#run:disabled{opacity:.5;cursor:default}
+.stamp{display:inline-block;border:2px solid;border-radius:8px;padding:0 8px;font:700 12px/22px Arial;letter-spacing:.08em;text-transform:uppercase}
+.ok{color:var(--green);border-color:var(--green)}.no{color:var(--coral);border-color:var(--coral)}
+#log{font:13px/1.6 "Courier New",monospace;min-height:120px;max-height:280px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px;margin:8px 0 0}
+#log div.bad{color:var(--coral)}#log div.good{color:var(--green)}#log div.dim{color:var(--grey)}
+#answer{font-size:18px;margin:8px 0 0}iframe{width:100%;height:720px;border:1px solid var(--line);border-radius:10px;margin-top:8px}
+[hidden]{display:none!important}
+</style></head><body><main>
+<h1>Device Recall Explainer</h1>
+<p class="meta">Ask why an FDA device recall number moved. Every number in the answer cites a SQL cell that code checks.</p>
+<div id="banner" class="banner">REPLAY: Zetaris results and the model reply are replayed from recordings of a real run; the evaluator and retry loop run for real. Untick "Sample mode" for a live run (needs your own keys).</div>
+<form id="form">
+  <div class="chips">
+    <button type="button" data-q="Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?">Why did recalls rise?</button>
+    <button type="button" data-q="For product code DSY, how many 2024 recall records were there, how many distinct recall events and firms, and what was the top root cause?">DSY drill-down</button>
+    <button type="button" data-q="What is the capital of France?">Out of scope (refused)</button>
+  </div>
+  <textarea id="q" rows="3" maxlength="500" aria-label="Question">Why did cardiovascular device recall records rise between 2023 and 2024, and which product codes drove it?</textarea>
+  <div class="row">
+    <label><input type="checkbox" id="playbook" checked> Playbook</label>
+    <label><input type="checkbox" id="sample" checked> Sample mode (replay)</label>
+    <button id="run" type="submit">Run</button>
+    <span id="status" class="stamp" hidden></span>
+  </div>
+</form>
+<div class="panel"><b>Progress</b><div id="log" aria-live="polite"></div></div>
+<div class="panel" id="result" hidden><b>Answer</b><p id="answer"></p>
+  <iframe id="report" title="Full report of the run" hidden></iframe></div>
+<script>
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+document.querySelectorAll(".chips button").forEach((b) => b.onclick = () => { $("q").value = b.dataset.q; });
+$("sample").onchange = () => { $("banner").hidden = !$("sample").checked; };
+
+function line(text) {
+  const row = document.createElement("div");
+  row.textContent = text;  // run text is only ever inserted as text
+  if (/rejected|unavailable|failed|gave up/.test(text)) row.className = "bad";
+  else if (/all verified/.test(text)) row.className = "good";
+  else if (/^\s|^memory|^evidence|^escalating/.test(text)) row.className = "dim";
+  $("log").appendChild(row);
+  $("log").scrollTop = $("log").scrollHeight;
+}
+
+function stamp(ok, text) {
+  const el = $("status");
+  el.hidden = false; el.className = "stamp " + (ok ? "ok" : "no"); el.textContent = text;
+}
+
+function show(doc) {
+  if (doc.reason) { stamp(false, "Refused"); line(doc.message || doc.reason); return; }
+  stamp(doc.verified, doc.verified ? "Verified" : "No verified answer");
+  $("result").hidden = false;
+  $("answer").textContent = doc.answer || "The evaluator rejected every draft, so no answer is shown.";
+  if (doc.report) { $("report").src = "/report/" + doc.report.split("/").pop(); $("report").hidden = false; }
+}
+
+async function run(question) {
+  const response = await fetch("/run", {method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({question, playbook: $("playbook").checked, sample: $("sample").checked})});
+  if (!response.ok) { line((await response.json()).error); return; }
+  const reader = response.body.getReader(), decoder = new TextDecoder();
+  let buffer = "";
+  for (;;) {
+    const {done, value} = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, {stream: true});
+    let end;
+    while ((end = buffer.indexOf("\n\n")) >= 0) {
+      const block = buffer.slice(0, end); buffer = buffer.slice(end + 2);
+      const name = (block.match(/^event: (.*)$/m) || [])[1], data = (block.match(/^data: (.*)$/m) || [])[1];
+      if (name === "progress") { line(data); if ($("sample").checked) await sleep(350); }  // a replay is instant; pace it
+      else if (name === "result") show(JSON.parse(data));
+      else if (name === "error") { stamp(false, "Error"); line(data); }
+    }
+  }
+}
+
+$("form").onsubmit = async (event) => {
+  event.preventDefault();
+  $("run").disabled = true; $("log").textContent = ""; $("status").hidden = true;
+  $("result").hidden = true; $("report").hidden = true;
+  try { await run($("q").value); }
+  catch (error) { stamp(false, "Error"); line("could not reach the local server: " + error.message); }
+  finally { $("run").disabled = false; }
+};
+</script>
+</main></body></html>
