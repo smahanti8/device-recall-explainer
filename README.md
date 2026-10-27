@@ -3,6 +3,8 @@
 An agent that answers "why did this change?" questions about FDA medical device recalls,
 and refuses to state any number it cannot trace to a query.
 
+**[▶ Replay demo](https://smahanti8.github.io/device-recall-explainer/)** (recorded runs, nothing runs live) &nbsp;·&nbsp; [Try it](#try-it) &nbsp;·&nbsp; [Architecture](#how-it-works) &nbsp;·&nbsp; [Sample report](reports/sample-run-1.html)
+
 Example question: *Why did cardiovascular device recall records rise between 2023 and 2024,
 and which product codes drove it?*
 
@@ -19,6 +21,19 @@ Rejection reasons go back to the model for another attempt.
 
 > Output is descriptive statistics over public data. It is not medical or regulatory advice.
 > openFDA's own notice applies: https://open.fda.gov/terms/
+
+## Try it
+
+| You want to | You need | Command |
+|---|---|---|
+| Replay a recorded real run (no keys, no services) | Docker | `docker build -t device-recall-explainer . && docker run --rm device-recall-explainer` |
+| The same without Docker | Python 3.9+ and Node.js, after the Setup install steps | `SAMPLE_MODE=true .venv/bin/python -m agent.main "<question>" --playbook --report` |
+| Click through a run in the browser | The same as the line above | `.venv/bin/python -m agent.web`, then open http://127.0.0.1:8765/ (see "Local web page") |
+| Run live on your own questions | The above, plus Zetaris running locally (Docker Desktop), a Meterless Nightshift account with an NVIDIA key and a Nemotron lane, and a `.env` copied from `.env.example` | see Setup |
+| Run the tests | Python 3.9+, and `npm ci --ignore-scripts` in `engines/hmem/reference` | `.venv/bin/python -W ignore -m unittest discover -s tests` |
+
+No GPU is needed: the models are called through Nightshift. Tested on macOS (Python 3.9, Node.js 26) and in the Docker
+image (Debian, Python 3.11, Node.js 22). Windows was not tested.
 
 ## Status
 
@@ -38,22 +53,11 @@ Rejection reasons go back to the model for another attempt.
 
 ## How it works
 
-```
-question
-   |  (+ hints recalled from earlier sessions, labelled "not evidence")
-   v
-drafter --- read-only SQL --> Zetaris --> openFDA tables
-   |   ^                                  (recalls, classification, root causes)
-   |   '--- rejection reasons -----------.
-   v                                     |
-draft: text + claims {value, sql, column, row}
-   |
-   v
-evaluator: fetch the result of every claim's cited SQL, compare the cell, check scope and unclaimed numbers
-   |
-   v
-accepted --> printed trace + model receipts --> verified claims stored in memory
-```
+![Architecture: a question passes the scope check and memory recall; the drafter's claims are checked by the evaluator against Zetaris; a rejection goes back for a redraft, and nothing unverified is ever shown](docs/architecture.svg)
+
+Every number in an answer is a claim that cites a cell of a SQL result, and the evaluator (plain code, not the model)
+re-reads that result before the answer is shown. In playbook mode (`--playbook`) code runs the fixed queries and the
+model explains numbered facts; in the default exploratory mode the model writes its own SQL (see "Two ways to draft").
 
 **Evaluator rules** (`agent/evaluator.py`, `agent/loop.py`). A claim is rejected with one reason:
 
@@ -112,7 +116,27 @@ The agent is a command line program. The terminal run is the real thing: progres
 open reports/report-*.html      # newest file in reports/
 ```
 
-The report is generated from a finished run; it is not a web application and cannot start a run.
+The report itself is generated from a finished run and cannot start one; the local web page below can.
+
+### Local web page
+
+A small page over the same command line, for clicking through a run instead of typing it:
+
+```bash
+.venv/bin/python -m agent.web          # then open http://127.0.0.1:8765/
+```
+
+Type a question or pick one of the examples, tick **Playbook** and **Sample mode (replay)** (both on by default), and press Run. The
+page shows the run's progress lines as they happen, then the verdict, the answer and the full report. It starts
+`python -m agent.main --json --report` as a subprocess, so a run through the page is the same run as on the command line;
+the page adds no logic of its own. Standard library only, no extra packages.
+
+- With **Sample mode** on, the run replays a recording (the banner says so) and needs no keys. Sample mode only knows the
+  recorded questions (the three example buttons); anything else is stopped with an explanation. Untick it for a live
+  run, which needs the services listed under "Try it".
+- It listens on 127.0.0.1 only, runs one question at a time, applies the same 500-character limit and scope check as
+  the command line, and refuses requests that did not come from its own page, because a live run spends your API keys.
+- It is a local tool. GitHub Pages cannot run it, since it needs Python and your keys.
 
 ### Sample mode: no services needed
 
