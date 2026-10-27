@@ -260,6 +260,16 @@ class TestRecallWisePage(unittest.TestCase):
                        ".cl{width:100%}", ".chip{border-radius:14px;flex-wrap:wrap}"):
             self.assertIn(needed, rules)
 
+    def test_the_page_does_not_jump_when_a_replay_runs(self):
+        """The step list has a fixed height (it scrolls inside its box), so the sections below never move."""
+        self.assertIn("#log{height:440px;overflow-y:auto", self.source)
+        self.assertIn("#hint{height:440px", self.source)
+        self.assertIn(".body{padding:24px;min-height:", self.source)
+        self.assertIn("log.scrollTop = log.scrollHeight", self.source)  # scroll the box, not the page
+        self.assertNotIn("scrollIntoView({block:", self.source)
+        self.assertIn(".qwrap{flex:1 1 560px;min-width:0;min-height:108px}", self.source)  # room for a three-line question
+        self.assertIn("log.hidden = !started", self.source)  # hint and list never take space at the same time
+
     def test_header_uses_the_soft_slate(self):
         self.assertIn("#4A5157", self.source)
 
