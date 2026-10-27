@@ -251,6 +251,15 @@ class TestRecallWisePage(unittest.TestCase):
         self.assertIn("via Zetaris", self.source)
         self.assertNotIn("Zetaris queries", self.source)
 
+    def test_phone_layout_rules(self):
+        """At phone width the tiles and stats stack, the chip labels sit on their own line and chips can wrap."""
+        css = re.search(r"@media \(max-width:720px\)\{(.*?)\}\s*@media", self.source, re.S)
+        self.assertTrue(css, "a phone media query is needed")
+        rules = css.group(1)
+        for needed in (".tiles{grid-template-columns:1fr}", ".stats{grid-template-columns:repeat(2,minmax(0,1fr))}",
+                       ".cl{width:100%}", ".chip{border-radius:14px;flex-wrap:wrap}"):
+            self.assertIn(needed, rules)
+
     def test_header_uses_the_soft_slate(self):
         self.assertIn("#4A5157", self.source)
 
