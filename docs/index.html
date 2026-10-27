@@ -91,11 +91,13 @@ pre{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid 
 .step{flex:1 1 200px;min-width:0;border:2px solid;border-radius:14px;padding:16px 18px}
 .step .n{font-size:12px;font-weight:700;letter-spacing:.08em;opacity:.85}.step .t{font-size:19px;font-weight:700;margin:2px 0 6px}.step .b{font-size:14px}
 .notes{margin-top:14px;display:flex;flex-wrap:wrap;gap:14px}.notes>div{flex:1 1 520px;border-radius:12px;padding:12px 18px;font-size:15px}
-footer{margin-top:40px;background:#E8F5EE;border:1px solid #B9DEC9;border-radius:12px;padding:16px 22px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.band{background:#F3F3F1;margin-top:110px;padding:80px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.band section{margin-top:0}
+footer{margin-top:56px;background:#E8F5EE;border:1px solid #B9DEC9;border-radius:12px;padding:16px 22px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
 footer .tag{background:var(--green-d);border-color:var(--green-d);color:#fff;line-height:24px}
 footer span.t{flex:1 1 600px;font-size:15px}
 [hidden]{display:none!important}
-@media (max-width:720px){.wrap{padding:0 20px}.hero h1{font-size:34px}.tile .n{font-size:34px}.tiles{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat .v{font-size:24px}.cl{width:100%}.chip{border-radius:14px;flex-wrap:wrap}.chip b{white-space:nowrap}.panel .head .q{font-size:20px}.body,.stats,.tabs,.panel .head{padding-left:16px;padding-right:16px}}
+@media (max-width:720px){.band{margin-top:72px;padding:48px 0}.wrap{padding:0 20px}.hero h1{font-size:34px}.tile .n{font-size:34px}.tiles{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat .v{font-size:24px}.cl{width:100%}.chip{border-radius:14px;flex-wrap:wrap}.chip b{white-space:nowrap}.panel .head .q{font-size:20px}.body,.stats,.tabs,.panel .head{padding-left:16px;padding-right:16px}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style></head><body>
 
@@ -159,6 +161,9 @@ footer span.t{flex:1 1 600px;font-size:15px}
   <div class="body" id="body"></div>
 </div>
 
+</div>
+
+<div class="band"><div class="wrap">
 <section>
   <h2>How a question becomes a verified answer</h2>
   <p class="lead">Coral boxes are model calls, grey boxes are plain code, green is a verified answer. The model never checks itself: the evaluator is code.</p>
@@ -171,10 +176,13 @@ footer span.t{flex:1 1 600px;font-size:15px}
   </div>
   <div class="notes">
     <div style="background:#FDF1EF;border:1px dashed #EE5A4A"><b style="color:#B93B2D">Rejected?</b> The evaluator names the reason (no citation, wrong scope, value mismatch, an unclaimed number) and sends it back for a redraft on a larger Nemotron model. Missing detail triggers a research step that fetches it from Zetaris.</div>
-    <div style="background:#F3F3F1;border:1px solid #6F767D"><b>Zetaris</b> serves the data: guarded, read-only SQL, one SELECT per call, openfda tables only. <b>H-MEM</b> recalls earlier verified claims as hints (never evidence) and stores new ones with their SQL.</div>
+    <div style="background:#fff;border:1px solid #6F767D"><b>Zetaris</b> serves the data: guarded, read-only SQL, one SELECT per call, openfda tables only. <b>H-MEM</b> recalls earlier verified claims as hints (never evidence) and stores new ones with their SQL.</div>
   </div>
 </section>
 
+</div></div>
+
+<div class="wrap">
 <footer><span class="tag">REPLAY</span><span class="t"><b>RecallWise, the Device Recall Explainer: replay of recorded runs.</b> Nothing runs live on this page. Each run was recorded from a real run, with SQL in Zetaris and reasoning on NVIDIA Nemotron through Meterless Nightshift; this page plays back the saved run logs and reports. To ask your own question, run it yourself: sample mode needs no services. Source and setup: <a href="https://github.com/smahanti8/device-recall-explainer">github.com/smahanti8/device-recall-explainer</a>. Built for the Open Agent Hackathon 2026.</span></footer>
 
 </div></main>

@@ -270,6 +270,13 @@ class TestRecallWisePage(unittest.TestCase):
         self.assertIn(".qwrap{flex:1 1 560px;min-width:0;min-height:108px}", self.source)  # room for a three-line question
         self.assertIn("log.hidden = !started", self.source)  # hint and list never take space at the same time
 
+    def test_how_it_works_sits_in_its_own_tinted_band_with_room_around_it(self):
+        self.assertIn(".band{background:#F3F3F1;margin-top:110px;padding:80px 0;", self.source)
+        band = re.search(r'<div class="band">(.*?)</div></div>\s*<div class="wrap">\s*<footer', self.visible, re.S)
+        self.assertTrue(band, "the band must close before the footer")
+        self.assertIn("How a question becomes a verified answer", band.group(1))
+        self.assertLess(self.visible.index('id="run-panel"'), self.visible.index('class="band"'))
+
     def test_header_uses_the_soft_slate(self):
         self.assertIn("#4A5157", self.source)
 
