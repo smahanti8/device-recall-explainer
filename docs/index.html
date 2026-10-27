@@ -35,6 +35,8 @@ main{padding-bottom:72px}
 .cta:hover{background:#D9DCDF;color:var(--ink)}
 .tiles{flex:1 1 560px;min-width:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .tile{background:var(--panel);border-radius:14px;padding:20px}
+.tile .scope{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);margin-bottom:6px}
+.tile.ctx{background:#fff;border:1px solid var(--line)}
 .tile .n{font-family:Cambria,Georgia,serif;font-size:44px;font-weight:700;line-height:1.1}
 .tile .d{font-size:14px;color:var(--body);margin-top:4px}
 .tile .src{font-size:12px;color:var(--soft);margin-top:6px}
@@ -126,13 +128,13 @@ footer span.t{flex:1 1 600px;font-size:15px}
     <p class="small">Built on public FDA data. Descriptive statistics only, not medical or regulatory advice.</p>
   </div>
   <div class="tiles">
-    <div class="tile"><div class="n">281 &rarr; 482</div><div class="d">recall entries for heart and blood-vessel devices, 2023 to 2024 (+201)</div>
+    <div class="tile"><div class="scope">This data: cardiovascular devices</div><div class="n">281 &rarr; 482</div><div class="d">recall entries for heart and blood-vessel devices, 2023 to 2024 (+201)</div>
       <div class="bar" style="width:58%;background:#9AA1A7"></div><div class="bar" style="width:100%;background:#EE5A4A"></div></div>
-    <div class="tile"><div class="n">54 &rarr; 1</div><div class="d">recall entries for one device type (code DSY) were a single recall by a single company</div></div>
-    <div class="tile"><div class="n">30 of 189</div><div class="d">reviewed recalls in the FDA's most serious category (Class I, moderate- and high-risk devices) had a patient death associated with them, 2018 to mid-2022</div>
+    <div class="tile"><div class="scope">This data: cardiovascular devices</div><div class="n">54 &rarr; 1</div><div class="d">recall entries for one device type (code DSY) were a single recall by a single company</div></div>
+    <div class="tile ctx"><div class="scope">Context: all medical devices</div><div class="n">30 of 189</div><div class="d">reviewed recalls in the FDA's most serious category (Class I), across all types of moderate- and high-risk devices, had a patient death associated with them (2018 to mid-2022)</div>
       <div class="bar" style="width:100%;background:#DADBDC"><div class="bar" style="width:15.8%;background:#EE5A4A;margin:0"></div></div>
       <div class="src"><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10204764/">Mooghali et al., 2023</a>. "Associated with", not "caused by".</div></div>
-    <div class="tile"><div class="n">13,623</div><div class="d">medical devices recalled in 5,035 recall events (2018 to mid-2022), 271 of them in the most serious category</div></div>
+    <div class="tile ctx"><div class="scope">Context: all medical devices</div><div class="n">13,623</div><div class="d">medical devices of all kinds recalled in 5,035 recall events (2018 to mid-2022), 271 of them in the most serious category</div></div>
   </div>
 </div>
 
